@@ -109,6 +109,15 @@ class GeniusTest {
 
     @Test
     fun `live genius search and scraping test with noisy titles`() = kotlinx.coroutines.runBlocking {
+        // This is an integration test against a third-party website, not a deterministic unit
+        // test. Genius can rate-limit CI or change search results/HTML at any time. Keep it
+        // available for manual verification, but opt in explicitly so normal Android unit tests
+        // do not fail because of an external service.
+        org.junit.Assume.assumeTrue(
+            "Set BITCHORD_RUN_LIVE_GENIUS_TESTS=true to run the live Genius integration test",
+            System.getenv("BITCHORD_RUN_LIVE_GENIUS_TESTS")?.equals("true", ignoreCase = true) == true,
+        )
+
         println("--- TEST 1: Queen - Bohemian Rhapsody (Official Video) ---")
         val lyrics1 = Genius.lyrics("Bohemian Rhapsody (Official Video)", "Queen")
         assertNotNull(lyrics1)
