@@ -151,8 +151,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/dist/SHA256SUMS" x86_64/
           repo-add --new x86_64/bitchord.db.tar.gz x86_64/bitchord-*.pkg.tar.zst
           repo-add --files --new x86_64/bitchord.files.tar.gz x86_64/bitchord-*.pkg.tar.zst
-          cp -f x86_64/bitchord.db.tar.gz x86_64/bitchord.db
-          cp -f x86_64/bitchord.files.tar.gz x86_64/bitchord.files
+          rm -f x86_64/bitchord.db x86_64/bitchord.files
+          cp x86_64/bitchord.db.tar.gz x86_64/bitchord.db
+          cp x86_64/bitchord.files.tar.gz x86_64/bitchord.files
           cat > index.html <<'HTML'
           <!doctype html><html lang="en"><meta charset="utf-8"><title>BitChord pacman repository</title><h1>BitChord pacman repository</h1><p>Configure <code>[bitchord]</code> with <code>Server = https://shntsk.github.io/BitChord-pacman/$arch</code>.</p><a href="x86_64/bitchord.db">Repository database</a></html>
           HTML
