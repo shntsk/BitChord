@@ -34,7 +34,7 @@ depends=(
 options=('!strip')
 
 package() {
-  local appdir="${startdir}/../../build/compose/binaries/main/app/BitChord"
+  local appdir="${startdir}/../../../build/compose/binaries/main/app/BitChord"
   local desktop_file="${startdir}/bitchord.desktop"
   local icon_file="${startdir}/../icons/AppIcon.png"
 
