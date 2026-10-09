@@ -1,0 +1,58 @@
+# Maintainer: BitChord contributors
+pkgname=bitchord
+# Arch pkgver does not allow hyphens. CI sets BITCHORD_PKGVER from the release tag.
+pkgver="${BITCHORD_PKGVER:-1.8_beta1}"
+pkgrel=1
+pkgdesc='Aesthetic YouTube Music client'
+arch=('x86_64')
+url='https://github.com/shntsk/BitChord'
+license=('GPL-3.0-only')
+depends=(
+  'alsa-lib'
+  'dbus'
+  'fontconfig'
+  'freetype2'
+  'gtk3'
+  'libcups'
+  'libglvnd'
+  'libx11'
+  'libxcb'
+  'libxcomposite'
+  'libxcursor'
+  'libxdamage'
+  'libxext'
+  'libxfixes'
+  'libxi'
+  'libxinerama'
+  'libxkbcommon'
+  'libxrandr'
+  'libxrender'
+  'libxtst'
+  'libxxf86vm'
+  'xdg-utils'
+)
+options=('!strip')
+
+package() {
+  local appdir="${startdir}/../../../build/compose/binaries/main/app/BitChord"
+  local desktop_file="${startdir}/bitchord.desktop"
+  local icon_file="${startdir}/../icons/AppIcon.png"
+
+  [[ -x "${appdir}/bin/BitChord" ]] || error "Missing jpackage launcher: ${appdir}/bin/BitChord. Run :desktopApp:createDistributable first."
+  [[ -x "${appdir}/lib/runtime/bin/java" ]] || error "Missing bundled Java runtime: ${appdir}/lib/runtime/bin/java."
+  [[ -f "${desktop_file}" ]] || error "Missing desktop entry: ${desktop_file}."
+  [[ -f "${icon_file}" ]] || error "Missing icon: ${icon_file}."
+
+  install -d "${pkgdir}/opt/BitChord"
+  cp -a "${appdir}/." "${pkgdir}/opt/BitChord/"
+
+  install -d "${pkgdir}/usr/bin"
+  cat > "${pkgdir}/usr/bin/bitchord" <<'LAUNCHER'
+#!/bin/sh
+exec /opt/BitChord/bin/BitChord "$@"
+LAUNCHER
+  chmod 755 "${pkgdir}/usr/bin/bitchord"
+
+  install -Dm644 "${desktop_file}" "${pkgdir}/usr/share/applications/bitchord.desktop"
+  install -Dm644 "${icon_file}" "${pkgdir}/usr/share/pixmaps/bitchord.png"
+}

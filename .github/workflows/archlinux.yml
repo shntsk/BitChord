@@ -1,0 +1,170 @@
+name: Arch Linux package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package (optional; defaults to project version)'
+        required: false
+        type: string
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: archlinux-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and validate Arch package
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:base-devel
+      options: --user root
+    steps:
+      - name: Install Arch build and desktop dependencies
+        shell: bash
+        run: |
+          pacman -Syu --noconfirm --needed \
+            bash ca-certificates cmake curl dbus git gtk3 jdk21-openjdk \
+            libglvnd libx11 libxcb libxcomposite libxcursor libxdamage libxext \
+            libxfixes libxi libxinerama libxkbcommon libxrandr libxrender libxtst \
+            libxxf86vm alsa-lib fontconfig freetype2 libsndfile ninja \
+            openssh pkgconf python repo-add sudo unzip xdg-utils zstd
+          java -version
+          cmake --version
+          makepkg --version
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up build version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION:-}"
+          if [[ -z "$version" && "${GITHUB_REF_TYPE}" == tag ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          if [[ -z "$version" ]]; then
+            version=$(grep -A5 '^val appVersion: String' desktopApp/build.gradle.kts | sed -n 's/.*?: "\([^"]*\)".*/\1/p' | head -n1)
+          fi
+          version="${version#v}"
+          pkgver=$(printf '%s' "$version" | sed -E 's/[-+]/_/g; s/[^A-Za-z0-9._]/_/g')
+          [[ -n "$pkgver" ]] || { echo "Could not determine package version" >&2; exit 1; }
+          echo "app_version=$version" >> "$GITHUB_OUTPUT"
+          echo "pkgver=$pkgver" >> "$GITHUB_OUTPUT"
+          echo "Building BitChord $version (Arch pkgver $pkgver)"
+
+      - name: Configure Gradle
+        run: chmod +x ./gradlew
+
+      - name: Run desktop tests
+        shell: bash
+        run: ./gradlew :shared:jvmTest :desktopApp:test -Pbitchord.version="${{ steps.version.outputs.app_version }}"
+
+      - name: Build existing Compose/jpackage Linux app image
+        shell: bash
+        run: |
+          ./gradlew :desktopApp:createDistributable -Pbitchord.version="${{ steps.version.outputs.app_version }}"
+          appdir=desktopApp/build/compose/binaries/main/app/BitChord
+          test -x "$appdir/bin/BitChord"
+          test -x "$appdir/lib/runtime/bin/java"
+          jar=$(find "$appdir" -type f -path '*/app/desktopApp*.jar' -print -quit)
+          test -n "$jar"
+          jar tf "$jar" | grep -q 'com/music/bitchord/desktop/MainKt.class'
+          jar tf "$jar" | grep -q 'models/.*\.onnx'
+          jar tf "$jar" | grep -q 'native/libbitchord_analysis.so'
+          find "$appdir" -type f -name '*.so' -print -quit | grep -q .
+          "$appdir/lib/runtime/bin/java" -version
+
+      - name: Prepare PKGBUILD and build package as an unprivileged user
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 0755 /buildsrc
+          cp -a "$GITHUB_WORKSPACE/." /buildsrc/source
+          chown -R nobody:nobody /buildsrc
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          chown nobody:nobody "$GITHUB_WORKSPACE/dist"
+          su nobody -s /bin/bash -c '
+            set -euo pipefail
+            cd /buildsrc/source/desktopApp/packaging/arch
+            export BITCHORD_PKGVER="${{ steps.version.outputs.pkgver }}"
+            makepkg --cleanbuild --nodeps --noconfirm --force
+            cp -v ./*.pkg.tar.zst "$GITHUB_WORKSPACE/dist/"
+          '
+          ls -lh dist
+
+      - name: Validate package metadata and contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkg=$(find dist -maxdepth 1 -type f -name 'bitchord-*-x86_64.pkg.tar.zst' -print -quit)
+          test -n "$pkg"
+          pacman -Qip "$pkg"
+          pacman -Qlp "$pkg" | grep -q '/opt/BitChord/bin/BitChord$'
+          pacman -Qlp "$pkg" | grep -q '/opt/BitChord/lib/runtime/bin/java$'
+          pacman -Qlp "$pkg" | grep -q '/usr/bin/bitchord$'
+          pacman -Qlp "$pkg" | grep -q '/usr/share/applications/bitchord.desktop$'
+          pacman -Qlp "$pkg" | grep -q '/usr/share/pixmaps/bitchord.png$'
+          pacman -Qlp "$pkg" | grep -q '\.onnx$'
+          pacman -Qlp "$pkg" | grep -q 'libbitchord_analysis\.so$'
+          bsdtar -tf "$pkg" >/dev/null
+          (cd dist && sha256sum "$(basename "$pkg")" > SHA256SUMS)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bitchord-archlinux-x86_64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish to separate pacman repository
+        if: success()
+        shell: bash
+        env:
+          PACMAN_REPO_TOKEN: ${{ secrets.PACMAN_REPO_TOKEN }}
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PACMAN_REPO_TOKEN:-}" ]]; then
+            echo "::notice::PACMAN_REPO_TOKEN is not set; package is available as a workflow artifact, publication skipped."
+            exit 0
+          fi
+          pkg=$(find "$GITHUB_WORKSPACE/dist" -maxdepth 1 -type f -name 'bitchord-*-x86_64.pkg.tar.zst' -print -quit)
+          test -n "$pkg"
+          mkdir -p /publish
+          git clone --depth 1 "https://x-access-token:${PACMAN_REPO_TOKEN}@github.com/shntsk/BitChord-pacman.git" /publish/BitChord-pacman
+          cd /publish/BitChord-pacman
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p x86_64
+          touch .nojekyll
+          cp "$pkg" x86_64/
+          cp "$GITHUB_WORKSPACE/dist/SHA256SUMS" x86_64/
+          repo-add --new x86_64/bitchord.db.tar.gz x86_64/bitchord-*.pkg.tar.zst
+          repo-add --files --new x86_64/bitchord.files.tar.gz x86_64/bitchord-*.pkg.tar.zst
+          rm -f x86_64/bitchord.db x86_64/bitchord.files
+          cp x86_64/bitchord.db.tar.gz x86_64/bitchord.db
+          cp x86_64/bitchord.files.tar.gz x86_64/bitchord.files
+          cat > index.html <<'HTML'
+          <!doctype html><html lang="en"><meta charset="utf-8"><title>BitChord pacman repository</title><h1>BitChord pacman repository</h1><p>Configure <code>[bitchord]</code> with <code>Server = https://shntsk.github.io/BitChord-pacman/$arch</code>.</p><a href="x86_64/bitchord.db">Repository database</a></html>
+          HTML
+          git add .nojekyll index.html x86_64
+          if git diff --cached --quiet; then
+            echo "No distribution changes to publish."
+          else
+            git commit -m "Publish BitChord ${APP_VERSION} Arch package"
+            git push origin HEAD
+          fi
+
+      - name: Desktop smoke-test limitation
+        if: always()
+        run: echo "Package contents are checked in CI; GUI startup still needs testing in a real Arch desktop session."
