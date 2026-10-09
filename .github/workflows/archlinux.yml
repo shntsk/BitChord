@@ -33,10 +33,12 @@ jobs:
             libglvnd libx11 libxcb libxcomposite libxcursor libxdamage libxext \
             libxfixes libxi libxinerama libxkbcommon libxrandr libxrender libxtst \
             libxxf86vm alsa-lib fontconfig freetype2 libsndfile ninja \
-            openssh pkgconf python repo-add sudo unzip xdg-utils zstd
+            openssh pacman pkgconf python sudo unzip xdg-utils zstd
           java -version
           cmake --version
           makepkg --version
+          command -v repo-add
+          pacman -Qo "$(command -v repo-add)"
 
       - name: Checkout source
         uses: actions/checkout@v4
