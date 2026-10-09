@@ -117,7 +117,7 @@ jobs:
           pacman -Qlp "$pkg" | grep -q '\.onnx$'
           pacman -Qlp "$pkg" | grep -q 'libbitchord_analysis\.so$'
           bsdtar -tf "$pkg" >/dev/null
-          sha256sum "$pkg" > dist/SHA256SUMS
+          (cd dist && sha256sum "$(basename "$pkg")" > SHA256SUMS)
 
       - uses: actions/upload-artifact@v4
         with:
