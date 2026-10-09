@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=BitChord
+GenericName=Music Player
+Comment=Aesthetic YouTube Music client
+Exec=bitchord %U
+Icon=bitchord
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+StartupWMClass=com-music-bitchord-desktop-MainKt
