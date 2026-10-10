@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to package (optional; defaults to project version)'
+        description: 'Version to package (optional; auto-detected from tag or desktopApp/build.gradle.kts)'
         required: false
         type: string
+      skip_tests:
+        description: 'Skip desktop tests (faster when debugging packaging)'
+        required: false
+        type: boolean
+        default: false
   push:
     tags: ['v*.*.*']
 
@@ -21,9 +26,13 @@ jobs:
   build:
     name: Build and validate Arch package
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     container:
       image: archlinux:base-devel
       options: --user root
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-21-openjdk
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
     steps:
       - name: Install Arch build and desktop dependencies
         shell: bash
@@ -34,14 +43,19 @@ jobs:
             libxfixes libxi libxinerama libxkbcommon libxrandr libxrender libxtst \
             libxxf86vm alsa-lib fontconfig freetype2 libsndfile ninja \
             openssh pacman pkgconf python sudo unzip xdg-utils zstd
-          java -version
+          "$JAVA_HOME/bin/java" -version
           cmake --version
           makepkg --version
           command -v repo-add
-          pacman -Qo "$(command -v repo-add)"
 
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + tags, needed for version auto-detection
+
+      - name: Trust workspace for git
+        shell: bash
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Set up build version
         id: version
@@ -50,24 +64,61 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
+          source_of_version="input"
           version="${INPUT_VERSION:-}"
+
+          # 1) pushed tag vX.Y.Z
           if [[ -z "$version" && "${GITHUB_REF_TYPE}" == tag ]]; then
-            version="${GITHUB_REF_NAME#v}"
+            version="${GITHUB_REF_NAME#v}"; source_of_version="tag"
           fi
+
+          # 2) the default declared in desktopApp/build.gradle.kts
+          #    (first quoted x.y[.z] within a few lines after `val appVersion`).
+          #    Every pipeline ends in `|| true` so "no match" never kills the script silently.
           if [[ -z "$version" ]]; then
-            version=$(grep -A5 '^val appVersion: String' desktopApp/build.gradle.kts | sed -n 's/.*?: "\\([^"]*\\)".*/\\1/p' | head -n1)
+            version=$(grep -A8 -E 'val[[:space:]]+appVersion' desktopApp/build.gradle.kts 2>/dev/null \
+              | grep -oE '"[0-9]+\.[0-9]+(\.[0-9]+)?[^"]*"' | head -n1 | tr -d '"' || true)
+            source_of_version="build.gradle.kts"
           fi
+
+          # 3) latest git tag reachable from HEAD
+          if [[ -z "$version" ]]; then
+            version=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+            source_of_version="git tag"
+          fi
+
           version="${version#v}"
+          if [[ -z "$version" ]]; then
+            echo "::error::Could not determine the version. Version-related lines in desktopApp/build.gradle.kts:"
+            grep -n -i 'version' desktopApp/build.gradle.kts || true
+            echo "::error::Re-run manually and fill the 'version' input (e.g. 1.7.0)."
+            exit 1
+          fi
+
+          # Gradle/jpackage want MAJOR.MINOR.PATCH
+          if [[ "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then version="${version}.0"; fi
+
           pkgver=$(printf '%s' "$version" | sed -E 's/[-+]/_/g; s/[^A-Za-z0-9._]/_/g')
-          [[ -n "$pkgver" ]] || { echo "Could not determine package version" >&2; exit 1; }
+          [[ -n "$pkgver" ]] || { echo "::error::Could not derive a valid pkgver from '$version'"; exit 1; }
+
           echo "app_version=$version" >> "$GITHUB_OUTPUT"
           echo "pkgver=$pkgver" >> "$GITHUB_OUTPUT"
-          echo "Building BitChord $version (Arch pkgver $pkgver)"
+          echo "Building BitChord $version (Arch pkgver $pkgver) - version from: $source_of_version"
+
+      - name: Write local.properties
+        shell: bash
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+        run: |
+          echo "LASTFM_API_KEY=${LASTFM_API_KEY}" > local.properties
+          echo "LASTFM_SECRET=${LASTFM_SECRET}" >> local.properties
 
       - name: Configure Gradle
         run: chmod +x ./gradlew
 
       - name: Run desktop tests
+        if: ${{ !inputs.skip_tests }}
         shell: bash
         run: ./gradlew :shared:jvmTest :desktopApp:test -Pbitchord.version="${{ steps.version.outputs.app_version }}"
 
@@ -81,29 +132,29 @@ jobs:
           echo "Validating app image: $appdir"
           if [[ ! -x "$appdir/bin/BitChord" ]]; then
             echo "::error::Missing executable launcher: $appdir/bin/BitChord"
-            find desktopApp/build/compose/binaries/main/app -maxdepth 4 -type f -print | sort | sed -n '1,200p'
+            find desktopApp/build/compose/binaries/main/app -maxdepth 4 -type f -print | sort | sed -n '1,200p' || true
             exit 1
           fi
           if [[ ! -x "$appdir/lib/runtime/bin/java" ]]; then
             echo "::error::Missing bundled Java runtime: $appdir/lib/runtime/bin/java"
-            find "$appdir" -maxdepth 5 -type f -print | sort | sed -n '1,200p'
+            find "$appdir" -maxdepth 5 -type f -print | sort | sed -n '1,200p' || true
             exit 1
           fi
 
           jar=$(find "$appdir/lib/app" -maxdepth 1 -type f -name 'desktopApp*.jar' -print -quit)
           if [[ -z "$jar" ]]; then
             echo "::error::Could not find desktopApp*.jar under $appdir/lib/app"
-            find "$appdir" -maxdepth 5 -type f -print | sort | sed -n '1,200p'
+            find "$appdir" -maxdepth 5 -type f -print | sort | sed -n '1,200p' || true
             exit 1
           fi
           echo "Checking application JAR: $jar"
 
-          # Scan the whole JAR first. This avoids jar | grep -q pipelines that can fail
-          # under pipefail if grep exits early and jar receives SIGPIPE.
+          # Write the listing to a file: `jar tf | grep -q` can fail under pipefail (SIGPIPE).
           jar_entries="$RUNNER_TEMP/bitchord-jar-entries.txt"
-          jar tf "$jar" > "$jar_entries"
+          "$JAVA_HOME/bin/jar" tf "$jar" > "$jar_entries"
           grep -Fxq 'com/music/bitchord/desktop/MainKt.class' "$jar_entries" || {
             echo "::error::BitChord desktop entry point is absent from $jar"
+            grep -i 'MainKt' "$jar_entries" | head -n 20 || true
             exit 1
           }
           grep -Eq '^models/.*[.]onnx$' "$jar_entries" || {
@@ -112,6 +163,7 @@ jobs:
           }
           grep -Fxq 'native/libbitchord_analysis.so' "$jar_entries" || {
             echo "::error::Automix native library is absent from $jar"
+            grep -i 'native/' "$jar_entries" | head -n 20 || true
             exit 1
           }
           if [[ -z "$(find "$appdir" -type f -name '*.so' -print -quit)" ]]; then
@@ -128,13 +180,17 @@ jobs:
           cp -a "$GITHUB_WORKSPACE/." /buildsrc/source
           chown -R nobody:nobody /buildsrc
           mkdir -p "$GITHUB_WORKSPACE/dist"
+          chmod 0777 "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/dist" || true
           chown nobody:nobody "$GITHUB_WORKSPACE/dist"
+          export BITCHORD_PKGVER="${{ steps.version.outputs.pkgver }}"
+          export BITCHORD_DIST="$GITHUB_WORKSPACE/dist"
           su nobody -s /bin/bash -c '
             set -euo pipefail
+            export HOME=/buildsrc/home
+            mkdir -p "$HOME"
             cd /buildsrc/source/desktopApp/packaging/arch
-            export BITCHORD_PKGVER="${{ steps.version.outputs.pkgver }}"
             makepkg --cleanbuild --nodeps --noconfirm --force
-            cp -v ./*.pkg.tar.zst "$GITHUB_WORKSPACE/dist/"
+            cp -v ./*.pkg.tar.zst "$BITCHORD_DIST/"
           '
           ls -lh dist
 
@@ -145,10 +201,10 @@ jobs:
           pkg=$(find dist -maxdepth 1 -type f -name 'bitchord-*-x86_64.pkg.tar.zst' -print -quit)
           if [[ -z "$pkg" ]]; then
             echo "::error::No bitchord x86_64 pacman package was produced"
+            ls -lh dist || true
             exit 1
           fi
           pacman -Qip "$pkg"
-          # Save the full listing to a file to avoid pipefail/SIGPIPE false negatives.
           pkgfiles="$RUNNER_TEMP/bitchord-package-files.txt"
           pacman -Qlp "$pkg" > "$pkgfiles"
           grep -Eq '/opt/BitChord/bin/BitChord$' "$pkgfiles" || { echo "::error::Missing installed launcher"; exit 1; }
@@ -192,6 +248,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p x86_64
           touch .nojekyll
+          rm -f x86_64/bitchord-*.pkg.tar.zst x86_64/bitchord.db* x86_64/bitchord.files*
           cp "$pkg" x86_64/
           cp "$GITHUB_WORKSPACE/dist/SHA256SUMS" x86_64/
           repo-add --new x86_64/bitchord.db.tar.gz x86_64/bitchord-*.pkg.tar.zst
