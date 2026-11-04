@@ -102,6 +102,7 @@ stdenv.mkDerivation (finalAttrs: {
   __darwinAllowLocalNetworking = true;
 
   gradleBuildTask = ":desktopApp:createDistributable";
+  gradleUpdateTask = ":desktopApp:nixDownloadDesktopDeps";
   gradleCheckTask = ":shared:jvmTest :desktopUi:jvmTest :desktopApp:test";
   gradleFlags = [
     "-Dfile.encoding=utf-8"

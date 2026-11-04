@@ -162,6 +162,48 @@ java {
     }
 }
 
+/**
+ * Fetch only the JVM classpaths needed by the desktop app and its tests.
+ *
+ * The repository also contains Android KMP targets. Nix's generic
+ * nixDownloadDeps task walks every configuration and therefore tries to
+ * resolve androidApis / androidJdkImage, which requires an Android SDK that
+ * is deliberately not part of a desktop-only Nix package.
+ *
+ * Resolving these selected JVM classpaths still downloads the complete
+ * compile/runtime dependency graphs for :shared, :desktopUi and :desktopApp.
+ */
+tasks.register("nixDownloadDesktopDeps") {
+    group = "build setup"
+    description = "Resolve only JVM dependencies used by the desktop app and desktop tests."
+
+    doLast {
+        val desktopProjects = listOf(
+            rootProject.project(":shared"),
+            rootProject.project(":desktopUi"),
+            rootProject.project(":desktopApp"),
+        )
+        val classpathNames = listOf(
+            "compileClasspath",
+            "runtimeClasspath",
+            "testCompileClasspath",
+            "testRuntimeClasspath",
+            "jvmCompileClasspath",
+            "jvmRuntimeClasspath",
+            "jvmTestCompileClasspath",
+            "jvmTestRuntimeClasspath",
+        )
+
+        desktopProjects.forEach { desktopProject ->
+            classpathNames.forEach { configurationName ->
+                desktopProject.configurations
+                    .findByName(configurationName)
+                    ?.resolve()
+            }
+        }
+    }
+}
+
 /** Builds the Automix analyser from the same C++ the Android app compiles. */
 // Per target, because both write the library under the same name and a Windows cross-build
 // otherwise left a `.dll` where the next Linux run looked for its `.so`.
