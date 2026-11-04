@@ -66,7 +66,7 @@ internal object DesktopUpdateChecker {
             releaseUrl = url,
             downloadUrl = if (isNixProfile) null else installerUrl(release),
             notes = release["body"]?.jsonPrimitive?.contentOrNull,
-            updateCommand = if (isNixProfile) "nix profile upgrade bitchord" else null,
+            updateCommand = if (isNixProfile) "nix profile upgrade packages.x86_64-linux.default" else null,
         )
     }.getOrNull()
 

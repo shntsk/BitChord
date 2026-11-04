@@ -64,7 +64,7 @@ launcher. No system-wide Java or FFmpeg installation is required.
 To update it later:
 
 ```bash
-nix profile upgrade bitchord
+nix profile upgrade packages.x86_64-linux.default
 ```
 
 To remove it:
