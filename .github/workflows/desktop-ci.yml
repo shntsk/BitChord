@@ -1,0 +1,66 @@
+name: Desktop CI
+
+on:
+  push:
+    paths:
+      - "desktopApp/**"
+      - "desktopUi/**"
+      - "shared/**"
+      - "sharedUi/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/desktop-ci.yml"
+  pull_request:
+    paths:
+      - "desktopApp/**"
+      - "desktopUi/**"
+      - "shared/**"
+      - "sharedUi/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/desktop-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux desktop
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Run JVM tests and assemble the desktop app
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :shared:jvmTest :desktopUi:jvmTest :desktopApp:test :desktopApp:createDistributable
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BitChord-linux-x64
+          path: desktopApp/build/compose/binaries/main/app/BitChord/
+          if-no-files-found: error
+
+  windows:
+    name: Windows desktop
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Run JVM tests and assemble the desktop app
+        run: .\gradlew.bat --no-daemon :shared:jvmTest :desktopUi:jvmTest :desktopApp:test :desktopApp:createDistributable
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BitChord-windows-x64
+          path: desktopApp/build/compose/binaries/main/app/BitChord/
+          if-no-files-found: error
