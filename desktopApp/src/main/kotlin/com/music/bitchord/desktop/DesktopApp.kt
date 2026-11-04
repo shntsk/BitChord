@@ -528,14 +528,21 @@ fun BitChordDesktopApp() {
             text = {
                 Text(
                     "BitChord ${update.version} is out — you have ${DesktopUpdateChecker.currentVersion}." +
-                        (update.notes?.takeIf { it.isNotBlank() }?.let { "\n\n${it.take(600)}" } ?: ""),
+                        (update.notes?.takeIf { it.isNotBlank() }?.let { "\n\n${it.take(600)}" } ?: "") +
+                        (update.updateCommand?.let { "\n\nUpdate this Nix profile with:\n${it}" } ?: ""),
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
-                    DesktopExternalLinks.open(update.downloadUrl ?: update.releaseUrl)
+                    update.updateCommand?.let(DesktopExternalLinks::copy)
+                        ?: DesktopExternalLinks.open(update.downloadUrl ?: update.releaseUrl)
                     availableUpdate = null
-                }) { Text(DesktopStrings["d_download", "Download"]) }
+                }) {
+                    Text(
+                        if (update.updateCommand != null) "Copy update command"
+                        else DesktopStrings["d_download", "Download"],
+                    )
+                }
             },
             dismissButton = {
                 TextButton(onClick = { availableUpdate = null }) {

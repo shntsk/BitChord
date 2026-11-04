@@ -30,6 +30,8 @@ internal object DesktopUpdateChecker {
         /** The installer for this platform, or null when the release has none. */
         val downloadUrl: String?,
         val notes: String?,
+        /** Nix profiles own installation updates; the app only offers this command. */
+        val updateCommand: String? = null,
     )
 
     private const val LATEST_RELEASE_URL =
@@ -57,11 +59,14 @@ internal object DesktopUpdateChecker {
         val url = release["html_url"]?.jsonPrimitive?.contentOrNull ?: return@runCatching null
         val latest = tag.removePrefix("v")
         if (!isNewer(latest, currentVersion)) return@runCatching null
+        val isNixProfile = DesktopPlatform.isLinux &&
+            System.getenv("BITCHORD_PACKAGE_MANAGER") == "nix"
         UpdateInfo(
             version = latest,
             releaseUrl = url,
-            downloadUrl = installerUrl(release),
+            downloadUrl = if (isNixProfile) null else installerUrl(release),
             notes = release["body"]?.jsonPrimitive?.contentOrNull,
+            updateCommand = if (isNixProfile) "nix profile upgrade bitchord" else null,
         )
     }.getOrNull()
 

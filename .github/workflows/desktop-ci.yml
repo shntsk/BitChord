@@ -10,6 +10,9 @@ on:
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle/**"
+      - "flake.nix"
+      - "flake.lock"
+      - "nix/**"
       - ".github/workflows/desktop-ci.yml"
   pull_request:
     paths:
@@ -24,7 +27,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   linux:
@@ -64,3 +67,39 @@ jobs:
           name: BitChord-windows-x64
           path: desktopApp/build/compose/binaries/main/app/BitChord/
           if-no-files-found: error
+
+  nixos:
+    name: NixOS package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Lock flake inputs
+        run: nix flake lock
+      - name: Generate the Gradle dependency lock
+        run: nix develop --command ./nix/update-deps.sh
+      - name: Commit generated Nix locks when they changed
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.lock nix/deps.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Add reproducible Nix dependency locks"
+            git push origin "HEAD:$BRANCH"
+          fi
+      - name: Build the Nix package
+        run: nix build .#default --print-build-logs
+      - name: Verify the installed launcher and desktop entry
+        run: |
+          out="$(nix path-info .#default)"
+          test -x "$out/bin/bitchord"
+          test -f "$out/share/applications/bitchord.desktop"
+          test -f "$out/share/icons/hicolor/512x512/apps/bitchord.png"
