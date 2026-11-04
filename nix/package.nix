@@ -87,6 +87,10 @@ stdenv.mkDerivation (finalAttrs: {
 
   buildInputs = runtimeLibraries;
 
+  # CMake is invoked by the Gradle task against desktopApp/native. Do not let
+  # Nix's generic CMake hook configure the repository root as a CMake project.
+  dontUseCmakeConfigure = true;
+
   # Gradle resolves Maven dependencies through Nixpkgs' MITM cache. This makes
   # subsequent builds offline and reproducible instead of downloading from
   # arbitrary Maven repositories during a Nix build.

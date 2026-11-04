@@ -23,11 +23,18 @@ on:
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle/**"
+      - "flake.nix"
+      - "flake.lock"
+      - "nix/**"
       - ".github/workflows/desktop-ci.yml"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: desktop-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   linux:
