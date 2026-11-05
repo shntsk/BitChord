@@ -25,6 +25,6 @@ The CLI writes a `.ipk` package into the current directory.
 
 ## GitHub Actions
 
-The `webOS TV` workflow packages `webos/app` into an `.ipk` on pushes and pull requests that touch `webos/**`. Download the `BitChord-webOS-IPK` artifact from the workflow run.
+The existing `Check & Platform Builds` workflow has a `webOS TV · IPK` job. It packages `webos/app` into an `.ipk` for pull requests and main-branch pushes. Download the `BitChord-webOS-IPK` artifact from that workflow run.
 
 The package is not yet tested on a physical LG TV or webOS simulator. The CI job verifies that the webOS CLI can package the app and uploads the resulting IPK.
