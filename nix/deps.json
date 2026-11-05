@@ -1373,6 +1373,11 @@
    "module": "sha256-HwCtYh+cIyGWA2KtyrQrUq0ryIQ+8Qi56WfM03E2rfU=",
    "pom": "sha256-5+ltaBasFiuUf4f3f9E1G52BMO9amENhClEF2qIyQ1M="
   },
+  "org/jetbrains/compose#gradle-plugin-internal-jdk-version-probe/1.10.3": {
+   "jar": "sha256-k+cSRZy25+oodZxQdFuWufCpy9NuECpkUbpqMgLDRkM=",
+   "module": "sha256-MSf8sJgMd67/CVn8KKpeVITi1BA1yjueIpQguoLCLhY=",
+   "pom": "sha256-osvx2YU1apEBi21GF/QrNhs1Q01n675H3DArWbEt80A="
+  },
   "org/jetbrains/compose#org.jetbrains.compose.gradle.plugin/1.10.3": {
    "pom": "sha256-0abWKYWWrm4rsGeAMbv4wl54KEBCalDJ4weoXLRXBsQ="
   },
