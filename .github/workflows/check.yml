@@ -2,7 +2,7 @@ name: Check & Platform Builds
 
 on:
   push:
-    branches: [main]
+    branches: [main, restore-desktop-linux-windows]
   pull_request:
 
 concurrency:
