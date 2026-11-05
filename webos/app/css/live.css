@@ -1,0 +1,50 @@
+/* Additions for live content. tv.css (the Android TV design language) is unchanged. */
+.screen[hidden], .shelf[hidden] { display: none; }
+
+/* Real artwork replaces the generated gradient art but keeps the same rounded shape and shadow. */
+.cover.has-art:before, .cover.has-art:after { display: none; }
+.cover img { position: absolute; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.empty { margin: calc(var(--u)*40) var(--safe-x); color: var(--secondary); font-size: calc(var(--u)*14); line-height: 1.5; }
+
+/* Search / settings inputs */
+.search-bar { padding: calc(var(--u)*14) var(--safe-x) calc(var(--u)*4); }
+input[data-focus] {
+  width: 100%; height: calc(var(--u)*36); padding: 0 calc(var(--u)*16);
+  border: 0; border-radius: 999px; outline: none;
+  background: rgba(255,255,255,.10); color: #fff;
+  font: inherit; font-size: calc(var(--u)*14); user-select: text;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+input[data-focus]::placeholder { color: rgba(255,255,255,.45); }
+input[data-focus]:focus, input[data-focus].is-focused { background: #fff; color: #0c0c0e; }
+input[data-focus]:focus::placeholder { color: rgba(0,0,0,.45); }
+
+/* Now Playing */
+.np { display: flex; align-items: center; gap: calc(var(--u)*34); padding: calc(var(--u)*20) var(--safe-x); }
+.np-art { flex: 0 0 auto; width: calc(var(--u)*230); height: calc(var(--u)*230); }
+.np-info { flex: 1; min-width: 0; }
+.np-info h1 { margin: 0; font-size: calc(var(--u)*26); line-height: 1.15; font-weight: 700; letter-spacing: -.4px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.np-info p { margin: calc(var(--u)*6) 0 calc(var(--u)*18); color: var(--secondary); font-size: calc(var(--u)*14);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.np-bar { height: calc(var(--u)*4); border-radius: 999px; background: rgba(255,255,255,.18); overflow: hidden; }
+#np-fill { width: 0; height: 100%; background: #fff; }
+.np-times { display: flex; justify-content: space-between; margin-top: calc(var(--u)*6); color: var(--muted); font-size: calc(var(--u)*11); }
+.np-controls { display: flex; align-items: center; gap: calc(var(--u)*14); margin-top: calc(var(--u)*20); }
+.round-btn { display: inline-flex; align-items: center; justify-content: center; width: calc(var(--u)*38); height: calc(var(--u)*38);
+  padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.10); color: #fff; font-size: calc(var(--u)*16); cursor: pointer;
+  transition: transform 190ms cubic-bezier(.2,.8,.2,1), background-color 140ms ease, color 140ms ease; }
+.round-big { width: calc(var(--u)*50); height: calc(var(--u)*50); font-size: calc(var(--u)*20); }
+.round-btn:focus, .round-btn.is-focused { background: #fff; color: #0c0c0e; transform: scale(1.12); }
+
+/* Settings */
+.panel { max-width: calc(var(--u)*420); padding: calc(var(--u)*14) var(--safe-x); }
+.panel h2 { margin: calc(var(--u)*14) 0 calc(var(--u)*2); font-size: calc(var(--u)*16); font-weight: 700; }
+.panel p { margin: 0 0 calc(var(--u)*8); color: var(--secondary); font-size: calc(var(--u)*12); line-height: 1.4; }
+.panel-actions { display: flex; gap: calc(var(--u)*10); margin-top: calc(var(--u)*18); }
+.pill-btn { height: calc(var(--u)*32); padding: 0 calc(var(--u)*18); border: 0; border-radius: 999px;
+  background: rgba(255,255,255,.12); color: #fff; font-size: calc(var(--u)*13); font-weight: 700; cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease; }
+.pill-btn:focus, .pill-btn.is-focused { background: #fff; color: #0c0c0e; }
+.panel-status { margin-top: calc(var(--u)*12) !important; }
