@@ -1,10 +1,27 @@
 # BitChord for webOS TV
 
-This is the first webOS TV port milestone. It reproduces the Android TV Home shell in a native webOS web app: the centered floating tab bar, SF Pro Display typography, dark gradient canvas, horizontal music shelves, square/circular artwork cards and focus-lift behavior.
+This is the initial webOS TV UI port, following the Android TV presentation as its visual reference: the same horizontal BitChord mark, centered floating tab bar, SF Pro Display typography, dark artwork-tinted canvas, shelves, and rounded/circular artwork cards.
 
-The cards currently use bundled preview artwork and sample labels. YouTube Music account sign-in, real home-feed data, playback, queue, lyrics, detail pages, and the remaining Android TV screens are not connected in this first milestone. The Android TV module is not changed by this port.
+## Remote navigation
 
-## Build locally
+D-pad navigation is explicitly managed for TV remotes rather than relying on browser tab order:
+
+- Left/Right moves within the current navigation bar or artwork shelf.
+- Up/Down moves between the tab bar and the first shelf, then between adjacent shelves while keeping the closest horizontal position.
+- Back returns from Home content to the selected tab. On the Home tab itself, Back is left to webOS so the platform can close the app.
+- Enter/Select activates the focused button. The LG webOS Back key code (461) is handled.
+
+Focus styling follows the Android TV implementation: tab controls invert to a white platter with dark icon/text; artwork cards lift slightly and cast a soft shadow. The card is not surrounded by a permanent white outline.
+
+The launcher icon files are copied from the Android app's 512x512 Play Store launcher artwork so the webOS tile uses the same BitChord identity.
+
+## Current implementation boundary
+
+The Home screen still contains sample artwork and labels. YouTube Music sign-in, live Home feed, playback, queue, lyrics, detail screens, and the remaining Android TV destinations have not yet been ported to webOS. Buttons that depend on those features display a clear not-connected message rather than pretending playback works.
+
+The Android TV module is used as the reference and is not modified by this webOS work.
+
+## Build
 
 Requirements: Node.js 20+ and npm.
 
@@ -14,17 +31,10 @@ cd webos
 ares-package ./app
 ```
 
-The CLI writes a `.ipk` package into the current directory.
-
-## Remote controls
-
-- Arrow keys move focus between tabs and cards.
-- Enter selects the focused item.
-- Back/Escape returns focus to Home.
-- Focused controls use the Android TV-style bright platter or lifted artwork.
+The official CLI writes an .ipk package into the current directory.
 
 ## GitHub Actions
 
-The existing `Check & Platform Builds` workflow has a `webOS TV · IPK` job. It packages `webos/app` into an `.ipk` for pull requests and main-branch pushes. Download the `BitChord-webOS-IPK` artifact from that workflow run.
+The existing platform workflow includes a webOS TV IPK job. It validates the manifest and JavaScript, packages webos/app, and uploads the BitChord-webOS-IPK artifact.
 
-The package is not yet tested on a physical LG TV or webOS simulator. The CI job verifies that the webOS CLI can package the app and uploads the resulting IPK.
+A successful CI package is not a substitute for installing and testing the IPK on a physical LG TV or webOS simulator.

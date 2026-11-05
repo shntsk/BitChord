@@ -71,3 +71,41 @@ button:focus,button:focus-visible{outline:none;color:#0c0c0e;background-color:#f
 .music-card:focus .card-title,.music-card:focus-visible .card-title{color:#fff}
 @media(max-width:1100px){.tab{padding-left:calc(var(--u)*10);padding-right:calc(var(--u)*10)}.tab-wide{min-width:calc(var(--u)*96)}.featured-card{width:calc(var(--u)*150);min-width:calc(var(--u)*150)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+
+/* Android TV / tvOS focus language: a bright platter for navigation,
+   gentle lift and shadow for artwork, and no permanent white outline. */
+.tab-icon svg, .account svg { fill: currentColor; stroke: none; }
+.tab-icon svg { width: calc(var(--u)*16); height: calc(var(--u)*16); }
+.account svg { width: calc(var(--u)*18); height: calc(var(--u)*18); }
+button:focus, button:focus-visible { outline: none; }
+.tab:focus, .tab:focus-visible {
+  color: #0c0c0e; background: #fff; box-shadow: none; transform: none;
+}
+.tab.is-selected:focus, .tab.is-selected:focus-visible { color: #0c0c0e; background: #fff; }
+.account:focus, .account:focus-visible {
+  color: #0c0c0e; background: #fff; transform: scale(1.15);
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+}
+.music-card {
+  transform: translateZ(0); transform-origin: center center;
+  will-change: transform; scroll-margin: calc(var(--u)*22);
+}
+.music-card:focus, .music-card:focus-visible {
+  color: #fff; background: transparent; box-shadow: none;
+  transform: scale(1.08); z-index: 5;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.34));
+}
+.music-card:focus .cover, .music-card:focus-visible .cover {
+  box-shadow: 0 12px 26px rgba(0,0,0,.30);
+}
+.music-card:focus .card-title, .music-card:focus-visible .card-title { color: #fff; }
+.music-card:focus .card-subtitle, .music-card:focus-visible .card-subtitle {
+  color: rgba(255,255,255,.78);
+}
+.card-row, .feed { scroll-behavior: auto; }
+.card-row { scroll-padding-left: var(--safe-x); scroll-padding-right: var(--safe-x); }
+.preview-note { display: none !important; }
+@media(prefers-reduced-motion:reduce) {
+  .music-card, .account, .tab { transition-duration: .01ms !important; }
+}
