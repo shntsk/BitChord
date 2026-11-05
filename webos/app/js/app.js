@@ -41,6 +41,18 @@
     });
   }
 
+  // Keep a class-based focus state in addition to :focus. Some webOS 6.x
+  // WebKit builds update the DOM focus correctly but are inconsistent about
+  // repainting complex :focus transitions on remote-driven buttons.
+  function setFocusedControl(element) {
+    Array.prototype.slice.call(document.querySelectorAll("[data-focus].is-focused"))
+      .forEach(function (item) { item.classList.remove("is-focused"); });
+
+    if (element && element.matches && element.matches("[data-focus]")) {
+      element.classList.add("is-focused");
+    }
+  }
+
   function focus(element, reveal) {
     if (!element || element.disabled) return;
     try {
@@ -48,6 +60,7 @@
     } catch (error) {
       element.focus();
     }
+    setFocusedControl(element);
     if (reveal !== false && element.scrollIntoView) {
       try {
         element.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "auto" });
@@ -280,6 +293,27 @@
         showHome();
       }
     }
+  }, true);
+
+  // Mirror actual browser focus into a stable class so CSS animations are
+  // triggered for D-pad, pointer, and programmatic focus in the same way.
+  document.addEventListener("focusin", function (event) {
+    var target = event.target;
+    if (target && target.closest) {
+      setFocusedControl(target.closest("[data-focus]"));
+    }
+  }, true);
+
+  document.addEventListener("focusout", function (event) {
+    var target = event.target;
+    window.setTimeout(function () {
+      if (document.activeElement === document.body ||
+          !document.activeElement ||
+          !document.activeElement.matches ||
+          !document.activeElement.matches("[data-focus]")) {
+        if (target && target.classList) target.classList.remove("is-focused");
+      }
+    }, 0);
   }, true);
 
   // Keep pointer focus and remote focus on the same element when using the
