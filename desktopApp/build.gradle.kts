@@ -199,6 +199,14 @@ tasks.register("nixDownloadDesktopDeps") {
             "jvmTestCompileClasspath",
             "jvmTestRuntimeClasspath",
         )
+        // The Kotlin Gradle plugin resolves its own compiler tooling lazily during compileKotlin*.
+        // Without these in deps.json the offline Nix build fails with
+        // "Could not find org.jetbrains.kotlin:kotlin-build-tools-impl".
+        val kotlinToolingPrefixes = listOf(
+            "kotlinBuildToolsApiClasspath",
+            "kotlinCompilerClasspath",
+            "kotlinCompilerPluginClasspath",
+        )
 
         desktopProjects.forEach { desktopProject ->
             classpathNames.forEach { configurationName ->
@@ -206,6 +214,13 @@ tasks.register("nixDownloadDesktopDeps") {
                     .findByName(configurationName)
                     ?.resolve()
             }
+
+            desktopProject.configurations
+                .filter { configuration ->
+                    configuration.isCanBeResolved &&
+                        kotlinToolingPrefixes.any { configuration.name.startsWith(it) }
+                }
+                .forEach { it.resolve() }
         }
     }
 }
