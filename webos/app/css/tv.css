@@ -180,3 +180,117 @@ button:focus, button:focus-visible { outline: none; }
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Explicit focus classes make the TV remote state repaint consistently on
+   older webOS WebKit versions, while retaining the Android TV focus language. */
+.tab,
+.account,
+.music-card,
+.music-card .cover,
+.music-card .card-title,
+.music-card .card-subtitle {
+  -webkit-transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+
+.tab.is-focused {
+  color: #0c0c0e;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(255, 255, 255, .16);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.account {
+  position: relative;
+  -webkit-transform: translateZ(0) scale(1);
+  transform: translateZ(0) scale(1);
+  -webkit-transition:
+    -webkit-transform 220ms cubic-bezier(.2, .8, .2, 1),
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 220ms cubic-bezier(.2, .8, .2, 1);
+  transition:
+    transform 220ms cubic-bezier(.2, .8, .2, 1),
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.account::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -5px;
+  border: 2px solid rgba(255, 255, 255, .72);
+  border-radius: 50%;
+  opacity: 0;
+  -webkit-transform: scale(.82);
+  transform: scale(.82);
+  -webkit-transition:
+    opacity 180ms ease,
+    -webkit-transform 220ms cubic-bezier(.2, .8, .2, 1);
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(.2, .8, .2, 1);
+  pointer-events: none;
+}
+
+.account.is-focused {
+  z-index: 2;
+  color: #0c0c0e;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .30);
+  -webkit-transform: translateZ(0) scale(1.15);
+  transform: translateZ(0) scale(1.15);
+}
+
+.account.is-focused::after {
+  opacity: 1;
+  -webkit-transform: scale(1);
+  transform: scale(1);
+}
+
+.music-card {
+  -webkit-transform: translateZ(0) scale(1);
+  transform: translateZ(0) scale(1);
+  -webkit-transition:
+    -webkit-transform 220ms cubic-bezier(.2, .8, .2, 1),
+    -webkit-filter 220ms cubic-bezier(.2, .8, .2, 1);
+  transition:
+    transform 220ms cubic-bezier(.2, .8, .2, 1),
+    filter 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.music-card.is-focused {
+  z-index: 5;
+  color: #fff;
+  -webkit-transform: translateZ(0) scale(1.08);
+  transform: translateZ(0) scale(1.08);
+  -webkit-filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+}
+
+.music-card.is-focused .cover {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .30);
+}
+
+.music-card.is-focused .card-title,
+.music-card.is-focused .card-subtitle {
+  -webkit-transform: translateY(calc(var(--u) * 7));
+  transform: translateY(calc(var(--u) * 7));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .account,
+  .account::after,
+  .music-card,
+  .music-card .cover,
+  .music-card .card-title,
+  .music-card .card-subtitle {
+    -webkit-transition-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
