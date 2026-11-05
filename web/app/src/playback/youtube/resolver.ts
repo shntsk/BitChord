@@ -18,9 +18,9 @@ export type PlayerClientName = (typeof CLIENT_ORDER)[number];
 
 /**
  * The BotGuard (WebPO) clients. As on Android (PoTokenGenerator /
- * InnerTubeX's WEB_BOTGUARD provider), they get two tokens: one bound to the
- * session's visitor data for the player request, and one bound to the
- * videoId for the stream. VISIONOS is not one of them.
+ * InnerTubeX's WEB_BOTGUARD provider), they get two tokens: one for the
+ * player request and one for the stream. VISIONOS is not one of them.
+ * What each token is bound to is decided by [poBindings].
  */
 const WEBPO_CLIENTS: ReadonlySet<PlayerClientName> = new Set(['YTMUSIC', 'WEB', 'MWEB']);
 
@@ -28,12 +28,57 @@ export function usesWebPo(client: PlayerClientName): boolean {
   return WEBPO_CLIENTS.has(client);
 }
 
-/** The player-request token for [client], or undefined for a client that doesn't take one. */
-async function playerRequestToken(yt: Innertube, client: PlayerClientName): Promise<string | undefined> {
-  if (!WEBPO_CLIENTS.has(client)) return undefined;
+// ---- What a WebPO token is bound to ----------------------------------------------
+
+/** A token is minted for one identifier: the session's visitor data, or the video. */
+export type PoBinding = 'visitor' | 'video';
+
+/**
+ * Debug override: localStorage "bitchord:debug:pobinding", for example
+ * "player=video,gvs=visitor". Either key may be left out.
+ *
+ * Why this exists: the web clients' streams stop at ~60-70s because YouTube
+ * doesn't accept our tokens (web/docs/youtube-playback.md, "Open"). The
+ * Android app binds the player-request token to the visitor data and the
+ * streaming token to the videoId, and this port copied that. yt-dlp and
+ * NewPipe bind the player-request token to the videoId instead, and yt-dlp
+ * binds the streaming (GVS) token to the visitor data when signed out. The
+ * sources disagree about GVS, so all four combinations are reachable from the
+ * Debug page; the one whose stream outlasts 90s becomes the default.
+ */
+export const DEBUG_POBINDING_KEY = 'bitchord:debug:pobinding';
+
+/** What each token is bound to now. The defaults are the behaviour this app had before the override existed. */
+export function poBindings(): { player: PoBinding; gvs: PoBinding } {
+  let raw = '';
+  try {
+    raw = localStorage.getItem(DEBUG_POBINDING_KEY) ?? '';
+  } catch {
+    // Storage can be unavailable; the defaults apply.
+  }
+  const pick = (key: string, fallback: PoBinding): PoBinding => {
+    const found = new RegExp(`${key}=(visitor|video)`).exec(raw)?.[1];
+    return (found as PoBinding | undefined) ?? fallback;
+  };
+  return { player: pick('player', 'visitor'), gvs: pick('gvs', 'video') };
+}
+
+/**
+ * The identifier a token of [kind] is minted for, or undefined when the
+ * session has no visitor data to bind to.
+ */
+export function bindingValue(kind: PoBinding, yt: Innertube, videoId: string): string | undefined {
+  if (kind === 'video') return videoId;
   const visitorData = yt.session.context.client.visitorData;
-  if (!visitorData) return undefined;
-  return botguard.mint(decodeURIComponent(visitorData));
+  return visitorData ? decodeURIComponent(visitorData) : undefined;
+}
+
+/** The player-request token for [client], or undefined for a client that doesn't take one. */
+async function playerRequestToken(yt: Innertube, client: PlayerClientName, videoId: string): Promise<string | undefined> {
+  if (!WEBPO_CLIENTS.has(client)) return undefined;
+  const binding = bindingValue(poBindings().player, yt, videoId);
+  if (!binding) return undefined;
+  return botguard.mint(binding);
 }
 
 /** StreamResolver: how many clients are worth trying for one track. */
@@ -166,7 +211,7 @@ export async function playerRequest(
   client: PlayerClientName,
   reloadPlaybackContext?: unknown,
 ): Promise<ApiResponse> {
-  const poToken = await playerRequestToken(yt, client);
+  const poToken = await playerRequestToken(yt, client, videoId);
   return yt.actions.execute('/player', {
     ...(poToken && { serviceIntegrityDimensions: { poToken } }),
     videoId,
