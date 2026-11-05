@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#101012">
   <title>BitChord</title>
   <link rel="stylesheet" href="css/tv.css">
+  <link rel="stylesheet" href="css/live.css">
 </head>
 <body>
   <main id="app" aria-label="BitChord">
@@ -29,44 +30,56 @@
       </button>
     </header>
 
-    <section id="home-screen" class="screen screen-home" aria-label="Home">
-      <div class="feed" id="home-feed">
-        <section class="shelf shelf-featured">
-          <div class="shelf-heading"><h1>Made for You</h1></div>
-          <div class="card-row featured-row">
-            <button class="music-card featured-card" data-focus type="button" data-message="Playback is not connected to the webOS interface yet."><span class="cover art-night"><span class="cover-orb"></span><span class="cover-label">01 <i>AFTER DARK</i></span></span><span class="card-title">After Dark</span><span class="card-subtitle">Your mix</span></button>
-            <button class="music-card featured-card" data-focus type="button" data-message="Playback is not connected to the webOS interface yet."><span class="cover art-blue"><span class="cover-orb"></span><span class="cover-label">02 <i>BLUE HOUR</i></span></span><span class="card-title">Blue Hour</span><span class="card-subtitle">Made for you</span></button>
-            <button class="music-card featured-card" data-focus type="button" data-message="Playback is not connected to the webOS interface yet."><span class="cover art-rose"><span class="cover-orb"></span><span class="cover-label">03 <i>SOFT FOCUS</i></span></span><span class="card-title">Soft Focus</span><span class="card-subtitle">Made for you</span></button>
-            <button class="music-card featured-card" data-focus type="button" data-message="Playback is not connected to the webOS interface yet."><span class="cover art-gold"><span class="cover-orb"></span><span class="cover-label">04 <i>GOLDEN</i></span></span><span class="card-title">Golden Hour</span><span class="card-subtitle">For the afternoon</span></button>
-            <button class="music-card featured-card" data-focus type="button" data-message="Playback is not connected to the webOS interface yet."><span class="cover art-violet"><span class="cover-orb"></span><span class="cover-label">05 <i>IN MOTION</i></span></span><span class="card-title">In Motion</span><span class="card-subtitle">Your mix</span></button>
-          </div>
-        </section>
+    <section id="screen-home" class="screen" data-screen="home" aria-label="Home"><div class="feed"></div></section>
+    <section id="screen-explore" class="screen" data-screen="explore" aria-label="Explore" hidden><div class="feed"></div></section>
+    <section id="screen-library" class="screen" data-screen="library" aria-label="Library" hidden><div class="feed"></div></section>
 
-        <section class="shelf">
-          <div class="shelf-heading"><h2>Artists to Discover</h2></div>
-          <div class="card-row artist-row">
-            <button class="music-card artist-card" data-focus type="button" data-message="Artist pages are not connected to the webOS catalog yet."><span class="cover artist-cover art-artist-1"><span class="artist-initial">A</span></span><span class="card-title">Aria Vale</span></button>
-            <button class="music-card artist-card" data-focus type="button" data-message="Artist pages are not connected to the webOS catalog yet."><span class="cover artist-cover art-artist-2"><span class="artist-initial">N</span></span><span class="card-title">NOVA</span></button>
-            <button class="music-card artist-card" data-focus type="button" data-message="Artist pages are not connected to the webOS catalog yet."><span class="cover artist-cover art-artist-3"><span class="artist-initial">M</span></span><span class="card-title">The Midnight</span></button>
-            <button class="music-card artist-card" data-focus type="button" data-message="Artist pages are not connected to the webOS catalog yet."><span class="cover artist-cover art-artist-4"><span class="artist-initial">L</span></span><span class="card-title">Luma</span></button>
-            <button class="music-card artist-card" data-focus type="button" data-message="Artist pages are not connected to the webOS catalog yet."><span class="cover artist-cover art-artist-5"><span class="artist-initial">Ø</span></span><span class="card-title">Nocturne</span></button>
-            <button class="music-card artist-card" data-focus type="button" data-message="Artist pages are not connected to the webOS catalog yet."><span class="cover artist-cover art-artist-6"><span class="artist-initial">S</span></span><span class="card-title">Solace</span></button>
-          </div>
-        </section>
-
-        <section class="shelf">
-          <div class="shelf-heading"><h2>Recently Played</h2></div>
-          <div class="card-row recent-row">
-            <button class="music-card recent-card" data-focus type="button" data-message="Playback history is not connected to the webOS account yet."><span class="cover art-coral"><span class="cover-orb"></span></span><span class="card-title">Slow Motion</span><span class="card-subtitle">Preview collection</span></button>
-            <button class="music-card recent-card" data-focus type="button" data-message="Playback history is not connected to the webOS account yet."><span class="cover art-mint"><span class="cover-orb"></span></span><span class="card-title">Parallel</span><span class="card-subtitle">Preview collection</span></button>
-            <button class="music-card recent-card" data-focus type="button" data-message="Playback history is not connected to the webOS account yet."><span class="cover art-plum"><span class="cover-orb"></span></span><span class="card-title">Velvet Skies</span><span class="card-subtitle">Preview collection</span></button>
-            <button class="music-card recent-card" data-focus type="button" data-message="Playback history is not connected to the webOS account yet."><span class="cover art-ice"><span class="cover-orb"></span></span><span class="card-title">Orbit</span><span class="card-subtitle">Preview collection</span></button>
-            <button class="music-card recent-card" data-focus type="button" data-message="Playback history is not connected to the webOS account yet."><span class="cover art-ember"><span class="cover-orb"></span></span><span class="card-title">Daydream</span><span class="card-subtitle">Preview collection</span></button>
-          </div>
-        </section>
+    <section id="screen-search" class="screen" data-screen="search" aria-label="Search" hidden>
+      <div class="feed">
+        <div class="search-bar">
+          <input id="search-input" type="text" data-focus data-lead placeholder="Search songs and artists" autocomplete="off">
+        </div>
+        <div id="search-results"></div>
       </div>
     </section>
 
+    <section id="screen-now-playing" class="screen" data-screen="now-playing" aria-label="Now Playing" hidden>
+      <div class="feed np">
+        <div class="np-art cover has-art art-night"><img id="np-art" alt=""></div>
+        <div class="np-info">
+          <h1 id="np-title">Nothing playing</h1>
+          <p id="np-artist">Pick a song from Home or Search</p>
+          <div class="np-bar"><div id="np-fill"></div></div>
+          <div class="np-times"><span id="np-pos">0:00</span><span id="np-dur">0:00</span></div>
+          <div class="np-controls">
+            <button type="button" class="round-btn" id="np-prev" data-focus aria-label="Previous">&#9198;</button>
+            <button type="button" class="round-btn round-big" id="np-play" data-focus aria-label="Play or pause">&#9654;</button>
+            <button type="button" class="round-btn" id="np-next" data-focus aria-label="Next">&#9197;</button>
+            <button type="button" class="round-btn" id="np-fav" data-focus aria-label="Favorite">&#9825;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-settings" class="screen" data-screen="settings" aria-label="Settings" hidden>
+      <div class="feed">
+        <div class="panel">
+          <h2>Music server</h2>
+          <p>Leave empty to use the built-in list of public Piped servers (tried in order).</p>
+          <input id="set-instance" type="text" data-focus data-lead placeholder="https://pipedapi.example.com" autocomplete="off">
+          <h2>Region</h2>
+          <p>Two-letter country code used for Trending, e.g. US, BR, GB.</p>
+          <input id="set-region" type="text" data-focus maxlength="2" placeholder="US" autocomplete="off">
+          <div class="panel-actions">
+            <button type="button" class="pill-btn" id="set-test" data-focus>Save &amp; test connection</button>
+            <button type="button" class="pill-btn" id="set-clear" data-focus>Clear history</button>
+          </div>
+          <p id="set-status" class="panel-status"></p>
+        </div>
+      </div>
+    </section>
+
+    <audio id="audio" preload="auto"></audio>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </main>
   <script src="js/app.js"></script>
