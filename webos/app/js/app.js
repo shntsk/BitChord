@@ -50,60 +50,6 @@
     focusTab();
   }
 
-  function center(element) {
-    var r = element.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-  }
-
-  // Android TV's TvRow enters every shelf at its leading visible card.
-  // This keeps D-pad movement predictable instead of jumping to the card that
-  // happens to share the previous row's horizontal coordinate.
-  function firstVisibleCard(row) {
-    if (!row) return null;
-    var bounds = row.getBoundingClientRect();
-    var cards = Array.prototype.slice.call(row.querySelectorAll(".music-card[data-focus]"));
-    for (var i = 0; i < cards.length; i += 1) {
-      var cardBounds = cards[i].getBoundingClientRect();
-      if (cardBounds.right > bounds.left + 1 && cardBounds.left < bounds.right - 1) {
-        return cards[i];
-      }
-    }
-    return cards[0] || null;
-  }
-
-  function moveHorizontal(current, direction) {
-    var row = current.closest(".card-row");
-    var items = row
-      ? Array.prototype.slice.call(row.querySelectorAll(".music-card[data-focus]"))
-      : tabs.concat(account ? [account] : []);
-    var index = items.indexOf(current);
-    var next = index + (direction === "left" ? -1 : 1);
-    if (index >= 0 && items[next]) focus(items[next], true);
-  }
-
-  function moveVertical(current, direction) {
-    var rows = Array.prototype.slice.call(document.querySelectorAll("#home-feed .card-row"));
-    var currentRow = current.closest(".card-row");
-
-    if (!currentRow) {
-      if (direction === "down") focus(firstVisibleCard(rows[0]), true);
-      return;
-    }
-
-    var index = rows.indexOf(currentRow);
-    var nextIndex = direction === "down" ? index + 1 : index - 1;
-    if (nextIndex < 0) { focusTab(); return; }
-    if (nextIndex >= rows.length) return;
-    focus(firstVisibleCard(rows[nextIndex]), true);
-  }
-
-  function moveFocus(direction) {
-    var targets = Array.prototype.slice.call(document.querySelectorAll("[data-focus]"));
-    var current = document.activeElement;
-    if (targets.indexOf(current) < 0) { focusTab(); return; }
-    if (direction === "left" || direction === "right") moveHorizontal(current, direction);
-    else moveVertical(current, direction);
-  }
 
   function activate(element) {
     if (!element) return;
@@ -142,12 +88,9 @@
       ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down"
     })[key] || (code === 37 ? "left" : code === 39 ? "right" : code === 38 ? "up" : code === 40 ? "down" : null);
 
-    if (direction) {
-      event.preventDefault();
-      event.stopPropagation();
-      moveFocus(direction);
-      return;
-    }
+    // Arrow keys are intentionally left to SpatialNavigation. LG's TV
+    // reference implementation listens on window and performs geometric
+    // four-way focus movement across the selectable controls.
 
     if (key === "Enter" || code === 13 || code === 23 || code === 66) {
       var active = document.activeElement;
@@ -180,7 +123,38 @@
     }
   });
 
+  // Follow LG's own RemoteControl sample: use spatial navigation rather
+  // than a hand-written key map so the Magic Remote's 5-way mode and pointer
+  // mode share one focus model.
   window.addEventListener("load", function () {
-    window.setTimeout(focusTab, 220);
+    if (!window.SpatialNavigation) {
+      notify("Remote navigation could not be initialized.");
+      return;
+    }
+
+    window.SpatialNavigation.init();
+    window.SpatialNavigation.add({
+      id: "bitchord-tv",
+      selector: "[data-focus]",
+      defaultElement: '.tab[data-tab="home"]',
+      enterTo: "last-focused",
+      rememberSource: true
+    });
+    window.SpatialNavigation.makeFocusable("bitchord-tv");
+    window.setTimeout(function () {
+      window.SpatialNavigation.focus("bitchord-tv");
+    }, 220);
   });
+
+  // LG requires pointer hover to update keyboard focus as well. Once the
+  // pointer disappears, arrow navigation resumes from the same element.
+  document.addEventListener("mouseover", function (event) {
+    var target = event.target;
+    while (target && target !== document && !(target.matches && target.matches("[data-focus]"))) {
+      target = target.parentNode;
+    }
+    if (target && target.matches && target.matches("[data-focus]") && window.SpatialNavigation) {
+      window.SpatialNavigation.focus(target);
+    }
+  }, false);
 }());
