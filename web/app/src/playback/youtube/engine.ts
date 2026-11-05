@@ -12,6 +12,8 @@ import {
   excludeClient,
   playerRequest,
   resolvePlayer,
+  bindingValue,
+  poBindings,
   UnplayableError,
   type PlayerClientName,
   type ResolvedPlayer,
@@ -71,6 +73,21 @@ const RETRY_STREAMING_SECONDS = 2;
 
 /** Waiting longer than this for the first audio means the client's stream isn't going to start. */
 const FIRST_AUDIO_TIMEOUT_MS = 15_000;
+
+/**
+ * What the streaming (GVS) token is minted for: the videoId or the visitor
+ * data, per the debug override in resolver.ts (default: the videoId, as before).
+ * Falls back to the videoId if the session has no visitor data.
+ */
+function gvsBinding(yt: Innertube, videoId: string): string {
+  return bindingValue(poBindings().gvs, yt, videoId) ?? videoId;
+}
+
+/** The streaming token for [client]'s media URLs (`pot`), or undefined for a client that doesn't take one. */
+async function gvsPoToken(yt: Innertube, videoId: string, client: PlayerClientName): Promise<string | undefined> {
+  if (!usesWebPo(client)) return undefined;
+  return botguard.mint(gvsBinding(yt, videoId));
+}
 
 /**
  * YouTube playback in the browser (prompt §5.2): a player request through
@@ -161,6 +178,8 @@ export class YouTubeEngine {
     this.loading = true;
     const started = performance.now();
     trackLog.i(`loading at ${startSec.toFixed(1)}s`, videoId);
+    const bindings = poBindings();
+    trackLog.d(`WebPO bindings: player=${bindings.player}, gvs=${bindings.gvs}`, videoId);
     try {
       const player = await this.ensurePlayer();
       this.yt ??= await timed('InnerTube session', videoId, getInnertube);
@@ -276,7 +295,7 @@ export class YouTubeEngine {
    * YouTube.js deciphers each URL (signature and n parameter) with the player
    * script while rendering the manifest.
    */
-  private async directManifest({ videoId, client, info }: ResolvedPlayer): Promise<string> {
+  private async directManifest({ videoId, client, info, yt }: ResolvedPlayer): Promise<string> {
     // The SABR adapter's dispose() unregisters Shaka's http(s) schemes
     // outright; put Shaka's own fetch plugin back before a plain load.
     for (const scheme of ['http', 'https']) {
@@ -287,8 +306,8 @@ export class YouTubeEngine {
       );
     }
     // BotGuard clients attach the streaming token to every media URL, as
-    // InnerTubeX does on Android (`pot`, bound to the videoId).
-    const pot = usesWebPo(client) ? await botguard.mint(videoId) : undefined;
+    // InnerTubeX does on Android (`pot`). What it is bound to: see gvsBinding.
+    const pot = await gvsPoToken(yt, videoId, client);
     return info.toDash({
       format_filter: (format) => format.has_video || !format.has_audio,
       url_transformer: (url) => {
@@ -314,7 +333,7 @@ export class YouTubeEngine {
   async videoStream(height: number | null = null): Promise<VideoStream | null> {
     const resolved = this.direct;
     if (!resolved) return null;
-    const { videoId, client, info } = resolved;
+    const { videoId, client, info, yt } = resolved;
     const pictures = (info.streaming_data?.adaptive_formats ?? []).filter(
       (f) => f.has_video && !f.has_audio && f.width && f.height && (f.url || f.signature_cipher || f.cipher),
     );
@@ -322,7 +341,7 @@ export class YouTubeEngine {
     if (!largest || largest.width! / largest.height! < MIN_VIDEO_ASPECT) return null;
     const heights = [...new Set(pictures.map((f) => f.height!))].sort((a, b) => b - a);
     const wanted = height !== null && heights.includes(height) ? height : null;
-    const pot = usesWebPo(client) ? await botguard.mint(videoId) : undefined;
+    const pot = await gvsPoToken(yt, videoId, client);
     const manifest = await info.toDash({
       // YouTube.js drops the formats this returns true for.
       format_filter: (format) => !format.has_video || format.has_audio || (wanted !== null && format.height !== wanted),
@@ -350,16 +369,17 @@ export class YouTubeEngine {
       },
     });
 
-    // The GVS token is bound to the videoId. A cold-start token answers at
-    // once and the real one is minted in the background, so a VOD never
-    // waits on BotGuard (Kira).
-    const coldStart = await botguard.coldStartToken(videoId);
+    // The GVS token's binding (videoId or visitor data) comes from gvsBinding.
+    // A cold-start token answers at once and the real one is minted in the
+    // background, so a VOD never waits on BotGuard (Kira).
+    const binding = gvsBinding(yt, videoId);
+    const coldStart = await botguard.coldStartToken(binding);
     let webPoToken: string | undefined;
     let minting = false;
     adapter.onMintPoToken(async () => {
       if (!webPoToken && !minting) {
         minting = true;
-        void botguard.mint(videoId).then((token) => {
+        void botguard.mint(binding).then((token) => {
           webPoToken = token;
           minting = false;
         });
