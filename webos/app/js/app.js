@@ -55,21 +55,26 @@
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
 
-  function closestCard(row, x) {
+  // Android TV's TvRow enters every shelf at its leading visible card.
+  // This keeps D-pad movement predictable instead of jumping to the card that
+  // happens to share the previous row's horizontal coordinate.
+  function firstVisibleCard(row) {
     if (!row) return null;
+    var bounds = row.getBoundingClientRect();
     var cards = Array.prototype.slice.call(row.querySelectorAll(".music-card[data-focus]"));
-    var candidate = null;
-    var distance = Infinity;
-    cards.forEach(function (card) {
-      var d = Math.abs(center(card).x - x);
-      if (d < distance) { candidate = card; distance = d; }
-    });
-    return candidate;
+    for (var i = 0; i < cards.length; i += 1) {
+      var cardBounds = cards[i].getBoundingClientRect();
+      if (cardBounds.right > bounds.left + 1 && cardBounds.left < bounds.right - 1) {
+        return cards[i];
+      }
+    }
+    return cards[0] || null;
   }
 
   function moveHorizontal(current, direction) {
-    var items = current.closest(".card-row")
-      ? Array.prototype.slice.call(current.closest(".card-row").querySelectorAll(".music-card[data-focus]"))
+    var row = current.closest(".card-row");
+    var items = row
+      ? Array.prototype.slice.call(row.querySelectorAll(".music-card[data-focus]"))
       : tabs.concat(account ? [account] : []);
     var index = items.indexOf(current);
     var next = index + (direction === "left" ? -1 : 1);
@@ -79,10 +84,9 @@
   function moveVertical(current, direction) {
     var rows = Array.prototype.slice.call(document.querySelectorAll("#home-feed .card-row"));
     var currentRow = current.closest(".card-row");
-    var point = center(current);
 
     if (!currentRow) {
-      if (direction === "down") focus(closestCard(rows[0], point.x), true);
+      if (direction === "down") focus(firstVisibleCard(rows[0]), true);
       return;
     }
 
@@ -90,7 +94,7 @@
     var nextIndex = direction === "down" ? index + 1 : index - 1;
     if (nextIndex < 0) { focusTab(); return; }
     if (nextIndex >= rows.length) return;
-    focus(closestCard(rows[nextIndex], point.x), true);
+    focus(firstVisibleCard(rows[nextIndex]), true);
   }
 
   function moveFocus(direction) {
