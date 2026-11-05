@@ -1,17 +1,23 @@
 # BitChord for webOS TV
 
+App version: `0.2.0`.
+
 This is the initial webOS TV UI port, following the Android TV presentation as its visual reference: the same horizontal BitChord mark, centered floating tab bar, SF Pro Display typography, dark artwork-tinted canvas, shelves, and rounded/circular artwork cards.
 
 ## Remote navigation
 
-D-pad navigation is explicitly managed for TV remotes rather than relying on browser tab order:
+D-pad navigation follows the Android TV shelf model:
 
-- Left/Right moves within the current navigation bar or artwork shelf.
-- Up/Down moves between the tab bar and the first shelf, then between adjacent shelves while keeping the closest horizontal position.
+- Left/Right moves through the current tab bar or artwork shelf.
+- Down from the tab bar enters the first visible card in the first shelf.
+- Up/Down moves between shelves, entering the next shelf at its first visible card.
+- Up from the first shelf returns to the selected tab. The Account control remains at the top right, after Settings in remote focus order.
 - Back returns from Home content to the selected tab. On the Home tab itself, Back is left to webOS so the platform can close the app.
 - Enter/Select activates the focused button. The LG webOS Back key code (461) is handled.
 
-Focus styling follows the Android TV implementation: tab controls invert to a white platter with dark icon/text; artwork cards lift slightly and cast a soft shadow. The card is not surrounded by a permanent white outline.
+Focus motion mirrors the Android TV implementation: tabs transition to a white platter in 140 ms; artwork lifts to 1.08x with a soft shadow and a spring-like 190 ms easing; captions move down by the equivalent of 7 dp. The Account button grows to 1.15x and gains a shadow. Reduced-motion preferences are respected.
+
+The Account control is present in the Android TV position and uses the person icon when no profile image is available. Its webOS sign-in and QR pairing flow is not connected yet.
 
 The launcher icon files are copied from the Android app's 512x512 Play Store launcher artwork so the webOS tile uses the same BitChord identity.
 
