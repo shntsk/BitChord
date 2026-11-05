@@ -2,11 +2,6 @@ name: webOS TV
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "webos/**"
-      - ".github/workflows/webos-ci.yml"
-  pull_request:
     paths:
       - "webos/**"
       - ".github/workflows/webos-ci.yml"
