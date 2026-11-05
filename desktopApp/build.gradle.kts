@@ -174,6 +174,12 @@ java {
  * compile/runtime dependency graphs for :shared, :desktopUi and :desktopApp.
  */
 tasks.register("nixDownloadDesktopDeps") {
+    // Compose resolves an internal JDK probe through a detached configuration
+    // while checking the runtime. Nix fetchDeps cannot discover it by scanning
+    // the normal JVM classpaths below, so execute the same check while building
+    // the dependency cache used by the offline Nix package build.
+    dependsOn("checkRuntime")
+
     group = "build setup"
     description = "Resolve only JVM dependencies used by the desktop app and desktop tests."
 
