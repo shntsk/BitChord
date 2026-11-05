@@ -1,8 +1,8 @@
-name: Check
+name: Check & Platform Builds
 
 on:
   push:
-    branches: [main]
+    branches: [main, restore-desktop-linux-windows]
   pull_request:
 
 concurrency:
@@ -78,3 +78,51 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - run: go test ./...
+
+
+  webos:
+    name: webOS TV · IPK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install the official webOS CLI
+        run: npm install --global @webos-tools/cli@3.2.6
+
+      - name: Validate webOS app
+        run: |
+          python -m json.tool webos/app/appinfo.json > /dev/null
+          node --check webos/app/js/app.js
+          test -f webos/app/index.html
+          test -f webos/app/icon.png
+          test -f webos/app/largeIcon.png
+
+      - name: Package the webOS TV app
+        working-directory: webos
+        run: |
+          ares -V
+          ares-package ./app
+          test -n "$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)"
+
+      - name: Upload webOS IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BitChord-webOS-IPK
+          path: webos/*.ipk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload webOS build reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webos-build-reports
+          path: webos/
+          if-no-files-found: ignore
+          retention-days: 7

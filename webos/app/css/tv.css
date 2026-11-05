@@ -1,0 +1,296 @@
+@font-face{font-family:"SF Pro Display";src:url("../fonts/sf-pro-display-regular.woff2") format("woff2");font-style:normal;font-weight:400}
+@font-face{font-family:"SF Pro Display";src:url("../fonts/sf-pro-display-bold.woff2") format("woff2");font-style:normal;font-weight:700}
+:root{--u:2px;--safe-x:calc(var(--u)*38);--white:#fff;--secondary:rgba(255,255,255,.60);--muted:rgba(255,255,255,.38);--glass:rgba(255,255,255,.08);--glass-selected:rgba(255,255,255,.28);--hairline:rgba(255,255,255,.10)}
+@media(max-width:1400px){:root{--u:1.5px}}
+@media(max-width:1000px){:root{--u:1px}}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#101012;color:#fff;font-family:"SF Pro Display",Arial,sans-serif;-webkit-font-smoothing:antialiased;user-select:none}
+body{overscroll-behavior:none}
+button{font:inherit;color:inherit}
+#app{position:relative;width:100vw;height:100vh;overflow:hidden;background:radial-gradient(ellipse 78% 58% at 50% -14%,rgba(105,54,75,.36),transparent 72%),linear-gradient(180deg,#26272c 0%,#19191e 43%,#101012 100%)}
+.topbar{position:absolute;z-index:20;top:calc(var(--u)*18);left:var(--safe-x);right:var(--safe-x);height:calc(var(--u)*51);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.brand{width:calc(var(--u)*42);height:calc(var(--u)*29);display:flex;align-items:center;pointer-events:auto}
+.brand img{display:block;width:100%;height:100%;object-fit:contain}
+.tabbar{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;padding:calc(var(--u)*4);border-radius:999px;background:rgba(255,255,255,.08);box-shadow:0 12px 42px rgba(0,0,0,.16);pointer-events:auto}
+.tab{flex:0 0 auto;height:calc(var(--u)*29);min-width:calc(var(--u)*62);padding:0 calc(var(--u)*16);border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.66);font-size:calc(var(--u)*13);font-weight:700;letter-spacing:-.15px;white-space:nowrap;cursor:pointer;transition:background 140ms ease,color 140ms ease}
+.tab.is-selected{background:rgba(255,255,255,.28);color:#fff}
+.tab-wide{min-width:calc(var(--u)*118)}
+.tab-divider{width:1px;height:calc(var(--u)*17);margin:0 calc(var(--u)*4);background:rgba(255,255,255,.13)}
+.tab-icon{min-width:0;width:calc(var(--u)*29);padding:0;display:inline-flex;align-items:center;justify-content:center}
+.tab-icon svg,.account svg{width:calc(var(--u)*16);height:calc(var(--u)*16);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.account{width:calc(var(--u)*32);height:calc(var(--u)*32);display:flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.10);color:rgba(255,255,255,.65);pointer-events:auto;cursor:pointer;transition:transform 180ms ease,background 140ms ease,color 140ms ease}
+.account svg{width:calc(var(--u)*18);height:calc(var(--u)*18)}
+.screen{position:absolute;inset:0;overflow:hidden}
+.feed{position:absolute;inset:calc(var(--u)*69) 0 0;overflow-x:hidden;overflow-y:auto;padding-bottom:calc(var(--u)*48);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.feed::-webkit-scrollbar,.card-row::-webkit-scrollbar{display:none}
+.shelf{width:100%;margin:0 0 calc(var(--u)*13)}
+.shelf-heading{min-height:calc(var(--u)*20);padding:0 var(--safe-x);display:flex;align-items:flex-end}
+.shelf-heading h1,.shelf-heading h2{margin:0;color:rgba(255,255,255,.90);font-size:calc(var(--u)*16);line-height:calc(var(--u)*20);font-weight:700;letter-spacing:-.2px}
+.card-row{display:flex;align-items:flex-start;gap:0;overflow-x:auto;overflow-y:visible;padding:calc(var(--u)*11) var(--safe-x) calc(var(--u)*14);scrollbar-width:none}
+.music-card{position:relative;display:flex;flex:0 0 auto;flex-direction:column;align-items:stretch;width:calc(var(--u)*131);min-width:calc(var(--u)*131);padding:0;margin-right:calc(var(--u)*16);border:0;border-radius:0;background:transparent;text-align:left;cursor:pointer;transform:translateZ(0);transition:transform 190ms cubic-bezier(.2,.8,.2,1),filter 190ms ease;outline:none}
+.featured-card{width:calc(var(--u)*163);min-width:calc(var(--u)*163)}.featured-card .cover{height:calc(var(--u)*163)}
+.cover{position:relative;display:block;width:100%;height:calc(var(--u)*131);overflow:hidden;border-radius:calc(var(--u)*10);background-color:#2e2f33;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.cover:before,.cover:after{content:"";position:absolute;pointer-events:none}
+.cover:before{z-index:1;width:72%;height:72%;left:14%;top:10%;border-radius:50%;border:1px solid rgba(255,255,255,.30);box-shadow:0 0 0 calc(var(--u)*13) rgba(255,255,255,.045),0 0 0 calc(var(--u)*28) rgba(255,255,255,.035);transform:rotate(-24deg) scaleY(.72)}
+.cover:after{z-index:2;width:120%;height:42%;left:-10%;bottom:-8%;border-radius:50% 50% 0 0;background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(0,0,0,.30));filter:blur(1px)}
+.cover-orb{position:absolute;z-index:0;width:68%;height:68%;left:16%;top:8%;border-radius:50%;background:radial-gradient(circle at 35% 32%,rgba(255,255,255,.75),rgba(255,255,255,.12) 18%,rgba(255,255,255,.02) 62%,transparent 70%);filter:blur(1px)}
+.cover-label{position:absolute;z-index:3;left:9%;right:9%;bottom:12%;color:rgba(255,255,255,.94);font-size:calc(var(--u)*10);font-weight:700;letter-spacing:.18em}
+.cover-label i{display:block;margin-top:calc(var(--u)*3);font-size:calc(var(--u)*19);line-height:1;font-style:normal;letter-spacing:-.05em}
+.art-night{background:radial-gradient(circle at 76% 21%,#f8b58b 0,#a64b4d 18%,transparent 48%),linear-gradient(145deg,#31213d,#17162a 53%,#080c18)}
+.art-blue{background:radial-gradient(circle at 35% 28%,#9de6f1 0,#346c99 23%,transparent 55%),linear-gradient(145deg,#14243d,#101522 56%,#08090f)}
+.art-rose{background:radial-gradient(circle at 65% 32%,#ffd3c0 0,#bd617e 22%,transparent 54%),linear-gradient(145deg,#44283d,#231a32 60%,#111019)}
+.art-gold{background:radial-gradient(circle at 52% 25%,#ffe3a1 0,#c8813e 20%,transparent 55%),linear-gradient(145deg,#51402d,#27202b 60%,#111018)}
+.art-violet{background:radial-gradient(circle at 70% 25%,#d9b6ff 0,#7550a8 22%,transparent 54%),linear-gradient(145deg,#30284d,#17152e 65%,#0d0d18)}
+.art-coral{background:radial-gradient(circle at 70% 30%,#ffb28f 0,#bd4f59 27%,transparent 58%),linear-gradient(145deg,#492a3b,#171723)}
+.art-mint{background:radial-gradient(circle at 32% 28%,#b4f5da 0,#488b78 23%,transparent 56%),linear-gradient(145deg,#1e4243,#101d26)}
+.art-plum{background:radial-gradient(circle at 62% 24%,#e8b6df 0,#8d4a83 25%,transparent 58%),linear-gradient(145deg,#442640,#171421)}
+.art-ice{background:radial-gradient(circle at 45% 26%,#d2f4ff 0,#4e86b0 25%,transparent 58%),linear-gradient(145deg,#1b354d,#111723)}
+.art-ember{background:radial-gradient(circle at 48% 25%,#ffca8a 0,#b25e3c 23%,transparent 58%),linear-gradient(145deg,#492a2c,#19151c)}
+.card-title{display:block;margin-top:calc(var(--u)*8);overflow:hidden;color:rgba(255,255,255,.86);font-size:calc(var(--u)*12);font-weight:600;line-height:calc(var(--u)*15);white-space:nowrap;text-overflow:ellipsis}
+.card-subtitle{display:block;overflow:hidden;color:var(--secondary);font-size:calc(var(--u)*11);font-weight:400;line-height:calc(var(--u)*14);white-space:nowrap;text-overflow:ellipsis}
+.artist-card{width:calc(var(--u)*120);min-width:calc(var(--u)*120);align-items:center}.artist-card .cover{height:calc(var(--u)*120)}
+.artist-cover{border-radius:50%}
+.artist-cover:before{width:63%;height:63%;left:18.5%;top:14%;border-color:rgba(255,255,255,.22)}
+.artist-cover:after{width:140%;height:48%;left:-20%;bottom:-18%}
+.artist-initial{position:absolute;z-index:3;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.82);font-size:calc(var(--u)*58);font-weight:700;letter-spacing:-.08em;text-shadow:0 4px 22px rgba(0,0,0,.2)}
+.art-artist-1{background:linear-gradient(135deg,#e2a58c,#8f4e61 55%,#2b2238)}
+.art-artist-2{background:linear-gradient(135deg,#93d6d0,#467d90 54%,#1a293c)}
+.art-artist-3{background:linear-gradient(135deg,#d8b0ef,#73538e 52%,#25203b)}
+.art-artist-4{background:linear-gradient(135deg,#efc2a0,#a96471 54%,#35263c)}
+.art-artist-5{background:linear-gradient(135deg,#b8bed3,#626981 54%,#222333)}
+.art-artist-6{background:linear-gradient(135deg,#a4d5b9,#427d70 54%,#182d35)}
+.toast{position:absolute;z-index:40;left:50%;bottom:calc(var(--u)*34);transform:translate(-50%,calc(var(--u)*16));max-width:70vw;padding:calc(var(--u)*12) calc(var(--u)*20);border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(18,18,22,.94);color:#fff;font-size:calc(var(--u)*13);opacity:0;pointer-events:none;transition:opacity 160ms ease,transform 160ms ease;white-space:nowrap}
+.toast.is-visible{opacity:1;transform:translate(-50%,0)}
+.preview-note{position:absolute;z-index:8;right:var(--safe-x);bottom:calc(var(--u)*12);color:rgba(255,255,255,.25);font-size:calc(var(--u)*8);font-weight:700;letter-spacing:.16em;pointer-events:none}
+button:focus,button:focus-visible{outline:none;color:#0c0c0e;background-color:#fff;box-shadow:0 0 calc(var(--u)*18) rgba(255,255,255,.20)}
+.tab:focus,.tab:focus-visible{color:#0c0c0e;background:#fff}
+.tab.is-selected:focus,.tab.is-selected:focus-visible{color:#0c0c0e;background:#fff}
+.account:focus,.account:focus-visible{color:#0c0c0e;background:#fff;transform:scale(1.15)}
+.music-card:focus,.music-card:focus-visible{background:transparent;box-shadow:none;color:#fff;transform:scale(1.07);z-index:5;filter:drop-shadow(0 12px 18px rgba(0,0,0,.34))}
+.music-card:focus .cover,.music-card:focus-visible .cover{box-shadow:0 0 0 2px rgba(255,255,255,.88),0 18px 34px rgba(0,0,0,.26)}
+.music-card:focus .card-title,.music-card:focus-visible .card-title{color:#fff}
+@media(max-width:1100px){.tab{padding-left:calc(var(--u)*10);padding-right:calc(var(--u)*10)}.tab-wide{min-width:calc(var(--u)*96)}.featured-card{width:calc(var(--u)*150);min-width:calc(var(--u)*150)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+
+/* Android TV / tvOS focus language: a bright platter for navigation,
+   gentle lift and shadow for artwork, and no permanent white outline. */
+.tab-icon svg, .account svg { fill: currentColor; stroke: none; }
+.tab-icon svg { width: calc(var(--u)*16); height: calc(var(--u)*16); }
+.account svg { width: calc(var(--u)*18); height: calc(var(--u)*18); }
+button:focus, button:focus-visible { outline: none; }
+.tab:focus, .tab:focus-visible {
+  color: #0c0c0e; background: #fff; box-shadow: none; transform: none;
+}
+.tab.is-selected:focus, .tab.is-selected:focus-visible { color: #0c0c0e; background: #fff; }
+.account:focus, .account:focus-visible {
+  color: #0c0c0e; background: #fff; transform: scale(1.15);
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+}
+.music-card {
+  transform: translateZ(0); transform-origin: center center;
+  will-change: transform; scroll-margin: calc(var(--u)*22);
+}
+.music-card:focus, .music-card:focus-visible {
+  color: #fff; background: transparent; box-shadow: none;
+  transform: scale(1.08); z-index: 5;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.34));
+}
+.music-card:focus .cover, .music-card:focus-visible .cover {
+  box-shadow: 0 12px 26px rgba(0,0,0,.30);
+}
+.music-card:focus .card-title, .music-card:focus-visible .card-title { color: #fff; }
+.music-card:focus .card-subtitle, .music-card:focus-visible .card-subtitle {
+  color: rgba(255,255,255,.78);
+}
+.card-row, .feed { scroll-behavior: auto; }
+.card-row { scroll-padding-left: var(--safe-x); scroll-padding-right: var(--safe-x); }
+.preview-note { display: none !important; }
+@media(prefers-reduced-motion:reduce) {
+  .music-card, .account, .tab { transition-duration: .01ms !important; }
+}
+
+
+/* Focus motion follows the Android TV spring/lift treatment. */
+.tab {
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.account {
+  transform: scale(1);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition:
+    transform 190ms cubic-bezier(.2, .8, .2, 1),
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.account:focus,
+.account:focus-visible {
+  transform: scale(1.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+}
+
+.music-card {
+  transition:
+    transform 190ms cubic-bezier(.2, .8, .2, 1),
+    filter 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.cover {
+  transition: box-shadow 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.card-title,
+.card-subtitle {
+  transition:
+    color 140ms ease,
+    transform 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.music-card:focus,
+.music-card:focus-visible {
+  transform: scale(1.08);
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+}
+
+.music-card:focus .cover,
+.music-card:focus-visible .cover {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .30);
+}
+
+.music-card:focus .card-title,
+.music-card:focus-visible .card-title,
+.music-card:focus .card-subtitle,
+.music-card:focus-visible .card-subtitle {
+  transform: translateY(calc(var(--u) * 7));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .account,
+  .music-card,
+  .cover,
+  .card-title,
+  .card-subtitle {
+    transition-duration: .01ms !important;
+  }
+}
+
+
+/* Explicit focus classes make the TV remote state repaint consistently on
+   older webOS WebKit versions, while retaining the Android TV focus language. */
+.tab,
+.account,
+.music-card,
+.music-card .cover,
+.music-card .card-title,
+.music-card .card-subtitle {
+  -webkit-transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1);
+}
+
+.tab.is-focused {
+  color: #0c0c0e;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(255, 255, 255, .16);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.account {
+  position: relative;
+  -webkit-transform: translateZ(0) scale(1);
+  transform: translateZ(0) scale(1);
+  -webkit-transition:
+    -webkit-transform 220ms cubic-bezier(.2, .8, .2, 1),
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 220ms cubic-bezier(.2, .8, .2, 1);
+  transition:
+    transform 220ms cubic-bezier(.2, .8, .2, 1),
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.account::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -5px;
+  border: 2px solid rgba(255, 255, 255, .72);
+  border-radius: 50%;
+  opacity: 0;
+  -webkit-transform: scale(.82);
+  transform: scale(.82);
+  -webkit-transition:
+    opacity 180ms ease,
+    -webkit-transform 220ms cubic-bezier(.2, .8, .2, 1);
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(.2, .8, .2, 1);
+  pointer-events: none;
+}
+
+.account.is-focused {
+  z-index: 2;
+  color: #0c0c0e;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .30);
+  -webkit-transform: translateZ(0) scale(1.15);
+  transform: translateZ(0) scale(1.15);
+}
+
+.account.is-focused::after {
+  opacity: 1;
+  -webkit-transform: scale(1);
+  transform: scale(1);
+}
+
+.music-card {
+  -webkit-transform: translateZ(0) scale(1);
+  transform: translateZ(0) scale(1);
+  -webkit-transition:
+    -webkit-transform 220ms cubic-bezier(.2, .8, .2, 1),
+    -webkit-filter 220ms cubic-bezier(.2, .8, .2, 1);
+  transition:
+    transform 220ms cubic-bezier(.2, .8, .2, 1),
+    filter 220ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.music-card.is-focused {
+  z-index: 5;
+  color: #fff;
+  -webkit-transform: translateZ(0) scale(1.08);
+  transform: translateZ(0) scale(1.08);
+  -webkit-filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+}
+
+.music-card.is-focused .cover {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .30);
+}
+
+.music-card.is-focused .card-title,
+.music-card.is-focused .card-subtitle {
+  -webkit-transform: translateY(calc(var(--u) * 7));
+  transform: translateY(calc(var(--u) * 7));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .account,
+  .account::after,
+  .music-card,
+  .music-card .cover,
+  .music-card .card-title,
+  .music-card .card-subtitle {
+    -webkit-transition-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

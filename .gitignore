@@ -50,3 +50,7 @@ AGENTS.md
 
 # Claude Code session files (launch configs, worktrees)
 .claude/
+
+# Compose Desktop outputs
+desktopApp/build/
+desktopUi/build/

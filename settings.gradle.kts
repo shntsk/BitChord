@@ -19,6 +19,10 @@ rootProject.name = "BitChord"
 include(":shared")
 include(":sharedUi")
 
+// Keep the native desktop application available without an Android SDK.
+include(":desktopUi")
+include(":desktopApp")
+
 // The Android module only when there is an SDK to build it against. A machine
 // set up for the desktop alone has none, and including it there fails at
 // configuration time — before the desktop module it has nothing to do with can
