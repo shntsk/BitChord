@@ -109,3 +109,74 @@ button:focus, button:focus-visible { outline: none; }
 @media(prefers-reduced-motion:reduce) {
   .music-card, .account, .tab { transition-duration: .01ms !important; }
 }
+
+
+/* Focus motion follows the Android TV spring/lift treatment. */
+.tab {
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.account {
+  transform: scale(1);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition:
+    transform 190ms cubic-bezier(.2, .8, .2, 1),
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.account:focus,
+.account:focus-visible {
+  transform: scale(1.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+}
+
+.music-card {
+  transition:
+    transform 190ms cubic-bezier(.2, .8, .2, 1),
+    filter 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.cover {
+  transition: box-shadow 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.card-title,
+.card-subtitle {
+  transition:
+    color 140ms ease,
+    transform 190ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.music-card:focus,
+.music-card:focus-visible {
+  transform: scale(1.08);
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .34));
+}
+
+.music-card:focus .cover,
+.music-card:focus-visible .cover {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .30);
+}
+
+.music-card:focus .card-title,
+.music-card:focus-visible .card-title,
+.music-card:focus .card-subtitle,
+.music-card:focus-visible .card-subtitle {
+  transform: translateY(calc(var(--u) * 7));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab,
+  .account,
+  .music-card,
+  .cover,
+  .card-title,
+  .card-subtitle {
+    transition-duration: .01ms !important;
+  }
+}
