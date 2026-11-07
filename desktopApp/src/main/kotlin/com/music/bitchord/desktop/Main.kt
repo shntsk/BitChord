@@ -9,12 +9,15 @@ import com.music.bitchord.data.innertube.StreamResolver
 import com.music.bitchord.data.innertube.potoken.PoTokenGenerator
 import com.music.bitchord.data.lyrics.LyricsTranslation
 import com.music.bitchord.data.spotify.SpotifyLibrary
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
@@ -23,6 +26,9 @@ import bitchord.desktopapp.generated.resources.logo
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.Toolkit
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.painterResource
 
@@ -136,15 +142,46 @@ private fun desktopMain() = application {
             // 1220dp surface inside a 560dp window, cropping the right edge and putting its resize
             // boundary off-screen until a maximize/restore cycle synchronised the two. Re-assert
             // the requested opening size on the native peer so both layers start in agreement.
-            composeWindow.size = Dimension(
-                (openingSize.width.value * transform.scaleX).roundToInt(),
-                (openingSize.height.value * transform.scaleY).roundToInt(),
-            )
+            // Only when the minimum really did shrink the peer. A tiling window manager (Hyprland,
+            // Sway, niri...) or a maximized start gives the window its own size before this runs;
+            // forcing the opening size over it left Compose laying out 1220x780 inside a larger
+            // window, with the rest of it blank.
+            val minimum = composeWindow.minimumSize
+            if (composeWindow.width <= minimum.width && composeWindow.height <= minimum.height) {
+                composeWindow.size = Dimension(
+                    (openingSize.width.value * transform.scaleX).roundToInt(),
+                    (openingSize.height.value * transform.scaleY).roundToInt(),
+                )
+            }
             if (DesktopPlatform.isWindows && DesktopWindowsFrame.install("BitChord")) {
                 DesktopWindowBackdrop.apply()
             } else if (DesktopPlatform.isMac && DesktopMacFrame.install(composeWindow)) {
                 DesktopWindowBackdrop.apply()
             }
+        }
+        // Keeps Compose's size in step with the native window whenever something other than us
+        // resizes it (a tiling window manager, XWayland, a monitor change), so the content always
+        // fills the window instead of staying at its opening size.
+        DisposableEffect(composeWindow) {
+            val listener = object : ComponentAdapter() {
+                override fun componentResized(e: ComponentEvent) {
+                    if (state.placement != WindowPlacement.Floating || state.isMinimized) return
+                    val scale = composeWindow.graphicsConfiguration?.defaultTransform
+                    val scaleX = scale?.scaleX?.takeIf { it > 0.0 } ?: 1.0
+                    val scaleY = scale?.scaleY?.takeIf { it > 0.0 } ?: 1.0
+                    val width = (composeWindow.width / scaleX).toFloat()
+                    val height = (composeWindow.height / scaleY).toFloat()
+                    if (width <= 0f || height <= 0f) return
+                    // A tolerance, so rounding between pixels and dp cannot ping-pong the two sizes.
+                    if (abs(state.size.width.value - width) > 2f || abs(state.size.height.value - height) > 2f) {
+                        state.size = DpSize(width.dp, height.dp)
+                    }
+                    composeWindow.contentPane.revalidate()
+                    composeWindow.contentPane.repaint()
+                }
+            }
+            composeWindow.addComponentListener(listener)
+            onDispose { composeWindow.removeComponentListener(listener) }
         }
         val actions = remember {
             DesktopWindowActions(
