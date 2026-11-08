@@ -274,8 +274,418 @@
     "now-playing": { build: function () {}, ttl: Infinity },
     settings: { build: buildSettings, ttl: 0 }
   };
-  var tabs = $$("[data-tab]");
+  var tabs = $("[data-tab]");
   var account = $(".account");
+
+  // ---------------------------------------------------------------------------
+  // UI-only Android TV menus. Behaviour is intentionally left for the next pass.
+  // ---------------------------------------------------------------------------
+  var dialogRoot = $("#dialog-root");
+  var activeDialog = null;
+  var dialogStack = [];
+  var dialogReturnFocus = null;
+
+  function onTvAccountAction(action) { /* TODO for implementation AI: connect account/profile behaviour. */ }
+  function onTvPlaybackAction(action, value) { /* TODO for implementation AI: connect playback preferences. */ }
+  function onTvAudioAction(action, value) { /* TODO for implementation AI: connect audio preferences and equalizer. */ }
+  function onTvLyricsAction(action, value) { /* TODO for implementation AI: connect lyrics preferences and provider ordering. */ }
+  function onTvDisplayAction(action, value) { /* TODO for implementation AI: connect display, theme and motion preferences. */ }
+  function onTvConnectionAction(action, value) { /* TODO for implementation AI: connect Discord and scrobbling accounts. */ }
+  function onTvGeneralAction(action, value) { /* TODO for implementation AI: connect update, setup and about actions. */ }
+  function onTvSongAction(action, value) { /* TODO for implementation AI: connect queue, like, album, artist and track actions. */ }
+
+  function dialogButton(label, value, callback, className) {
+    var button = el("button", "tv-dialog-row" + (className ? " " + className : ""));
+    button.type = "button";
+    button.setAttribute("data-focus", "");
+    var copy = el("span", "tv-dialog-row-copy");
+    copy.appendChild(el("strong", null, label));
+    if (value && value.description) copy.appendChild(el("small", null, value.description));
+    button.appendChild(copy);
+    if (value && value.value) button.appendChild(el("span", "tv-dialog-value", value.value));
+    if (value && value.chevron) button.appendChild(el("span", "tv-dialog-chevron", "›"));
+    button.addEventListener("click", callback || function () {});
+    return button;
+  }
+
+  function renderDialog(config, push) {
+    if (!dialogRoot) return;
+    if (activeDialog && push) dialogStack.push(activeDialog._config);
+    if (!activeDialog && !dialogReturnFocus) dialogReturnFocus = document.activeElement;
+    dialogRoot.innerHTML = "";
+    var overlay = el("div", "tv-dialog-overlay" + (config.fullscreen ? " is-fullscreen" : ""));
+    overlay.setAttribute("role", "presentation");
+    overlay._config = config;
+    activeDialog = overlay;
+
+    if (config.fullscreen) {
+      var full = el("div", "tv-profile-switcher");
+      var brand = el("img", "tv-profile-mark");
+      brand.src = "brand-mark.svg";
+      brand.alt = "BitChord";
+      full.appendChild(brand);
+      full.appendChild(el("h1", null, config.title));
+      if (config.message) full.appendChild(el("p", "tv-dialog-message", config.message));
+      var profiles = el("div", "tv-profile-grid");
+      (config.profiles || []).forEach(function (profile, index) {
+        var card = el("button", "tv-profile-card");
+        card.type = "button";
+        card.setAttribute("data-focus", "");
+        var avatar = el("span", "tv-profile-avatar", profile.initial || "P");
+        card.appendChild(avatar);
+        card.appendChild(el("strong", null, profile.name));
+        card.appendChild(el("small", null, profile.subtitle || ""));
+        card.addEventListener("click", profile.onClick || function () {});
+        profiles.appendChild(card);
+      });
+      full.appendChild(profiles);
+      if (config.rows && config.rows.length) {
+        var actions = el("div", "tv-profile-actions");
+        config.rows.forEach(function (item) {
+          actions.appendChild(dialogButton(item.label, { description: item.description, value: item.value, chevron: item.chevron }, item.onClick, item.destructive ? "is-destructive" : ""));
+        });
+        full.appendChild(actions);
+      }
+      overlay.appendChild(full);
+    } else {
+      var panel = el("section", "tv-dialog-panel" + (config.wide ? " is-wide" : ""));
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-modal", "true");
+      panel.appendChild(el("h2", "tv-dialog-title", config.title || ""));
+      if (config.message) panel.appendChild(el("p", "tv-dialog-message", config.message));
+      if (config.artwork) {
+        var art = el("img", "tv-dialog-artwork");
+        art.src = config.artwork;
+        art.alt = "";
+        panel.appendChild(art);
+      }
+      if (config.content) config.content(panel);
+      if (config.rows && config.rows.length) {
+        var list = el("div", "tv-dialog-list");
+        config.rows.forEach(function (item) {
+          list.appendChild(dialogButton(item.label, {
+            description: item.description,
+            value: item.value,
+            chevron: item.chevron
+          }, item.onClick, item.destructive ? "is-destructive" : ""));
+        });
+        panel.appendChild(list);
+      }
+      if (config.footer) config.footer(panel);
+      if (config.cancel !== false) {
+        var footer = el("div", "tv-dialog-footer");
+        footer.appendChild(dialogButton("Cancel", null, function () { closeTvDialog(); }, "tv-dialog-cancel"));
+        panel.appendChild(footer);
+      }
+      overlay.appendChild(panel);
+    }
+    dialogRoot.appendChild(overlay);
+    window.setTimeout(function () {
+      overlay.classList.add("is-open");
+      var first = $("[data-focus]", overlay);
+      if (first) focus(first, false);
+    }, 20);
+  }
+
+  function closeTvDialog() {
+    if (!activeDialog) return;
+    var closing = activeDialog;
+    closing.classList.remove("is-open");
+    closing.classList.add("is-closing");
+    window.setTimeout(function () {
+      if (activeDialog !== closing) return;
+      if (dialogStack.length) {
+        var previous = dialogStack.pop();
+        activeDialog = null;
+        renderDialog(previous, false);
+      } else {
+        dialogRoot.innerHTML = "";
+        activeDialog = null;
+        var back = dialogReturnFocus;
+        dialogReturnFocus = null;
+        if (back && document.documentElement.contains(back)) focus(back, false);
+        else focusTab();
+      }
+    }, 190);
+  }
+
+  function showTvMenu(title, message, rows, options) {
+    options = options || {};
+    renderDialog({
+      title: title,
+      message: message || "",
+      rows: rows || [],
+      wide: !!options.wide,
+      fullscreen: !!options.fullscreen,
+      profiles: options.profiles || null,
+      cancel: options.cancel
+    }, !!options.push);
+  }
+
+  function openAccountDialog() {
+    showTvMenu("Sign In to YouTube Music",
+      "Your library, playlists and recommendations follow your account.",
+      [
+        { label: "Sign In on This TV", description: "Use the remote to sign in to Google.", chevron: true, onClick: function () { onTvAccountAction("sign-in-on-tv"); } },
+        { label: "Sign In with Your Phone", description: "Scan a code with a phone on the same Wi-Fi.", chevron: true, onClick: function () { onTvAccountAction("phone-qr-sign-in"); } },
+        { label: "Not Now", onClick: function () { closeTvDialog(); } }
+      ]);
+  }
+
+  function openProfileSwitcher() {
+    renderDialog({
+      title: "Who's watching?",
+      message: "Choose a profile to switch your library, playlists and recommendations.",
+      fullscreen: true,
+      profiles: [
+        { name: "Personal", subtitle: "YouTube Music", initial: "P", onClick: function () { onTvAccountAction("select-personal-profile"); } },
+        { name: "Brand account", subtitle: "Additional profile", initial: "B", onClick: function () { onTvAccountAction("select-brand-profile"); } },
+        { name: "Add account", subtitle: "Sign in to YouTube Music", initial: "+", onClick: function () { openAccountDialog(); } }
+      ],
+      rows: [
+        { label: "Account Settings", description: "Profile lock and sign-out options.", chevron: true, onClick: function () { openAccountSettingsDialog(); } },
+        { label: "Done", onClick: function () { closeTvDialog(); } }
+      ],
+      cancel: false
+    }, false);
+  }
+
+  function openAccountSettingsDialog() {
+    showTvMenu("Account Settings", "Personal · YouTube Music", [
+      { label: "App Lock (4-Digit PIN)", description: "Protect this profile with a PIN.", value: "Off", chevron: true, onClick: function () { onTvAccountAction("profile-pin"); } },
+      { label: "Sign Out", description: "Remove this account from TV.", chevron: true, destructive: true, onClick: function () { onTvAccountAction("sign-out"); } },
+      { label: "Done", onClick: function () { closeTvDialog(); } }
+    ], { push: true });
+  }
+
+  function openPlaylistDialog() {
+    showTvMenu("Add to Playlist", current ? current.title : "Choose a playlist for this song.", [
+      { label: "New Playlist…", description: "Create a private playlist with this song.", chevron: true, onClick: function () { openNewPlaylistDialog(); } },
+      { label: "Liked Music", value: "Playlist", onClick: function () { onTvSongAction("add-to-liked-music"); } },
+      { label: "Favorites", value: "Playlist", onClick: function () { onTvSongAction("add-to-favorites-playlist"); } }
+    ], { push: true });
+  }
+
+  function openNewPlaylistDialog() {
+    showTvMenu("New Playlist", "It will be private, with this song in it.", [], {
+      push: true, wide: true,
+      cancel: true,
+      content: function (panel) {
+        var input = el("input", "tv-dialog-input");
+        input.type = "text";
+        input.placeholder = "Playlist Name";
+        input.setAttribute("data-focus", "");
+        panel.appendChild(input);
+        var create = dialogButton("Create", null, function () { onTvSongAction("create-playlist", input.value); }, "is-primary");
+        panel.appendChild(create);
+      }
+    });
+  }
+
+  function openSleepTimerDialog() {
+    showTvMenu("Sleep Timer", "Stop playing music after", [
+      { label: "15 Minutes", onClick: function () { onTvSongAction("sleep-timer", 15); } },
+      { label: "30 Minutes", onClick: function () { onTvSongAction("sleep-timer", 30); } },
+      { label: "45 Minutes", onClick: function () { onTvSongAction("sleep-timer", 45); } },
+      { label: "60 Minutes", onClick: function () { onTvSongAction("sleep-timer", 60); } },
+      { label: "End of Current Song", onClick: function () { onTvSongAction("sleep-timer-after-track"); } },
+      { label: "Turn Off Timer", destructive: true, onClick: function () { onTvSongAction("sleep-timer-off"); } }
+    ], { push: true });
+  }
+
+  function openEqualizerDialog() {
+    showTvMenu("Equalizer", "Shape the sound with presets or seven bands of your own.", [], {
+      push: true, wide: true,
+      content: function (panel) {
+        var tabs = el("div", "tv-dialog-segments");
+        var bands = dialogButton("Bands", { value: "Selected" }, function () { onTvAudioAction("equalizer-tab", "bands"); }, "is-selected");
+        var presets = dialogButton("Presets", null, function () { openEqualizerPresetsDialog(); });
+        tabs.appendChild(bands); tabs.appendChild(presets); panel.appendChild(tabs);
+        var faders = el("div", "tv-eq-faders");
+        ["60","150","400","1k","2.4k","6k","15k"].forEach(function (hz, index) {
+          var fader = el("div", "tv-eq-fader");
+          fader.appendChild(el("strong", null, "0 dB"));
+          var rail = el("div", "tv-eq-rail");
+          var fill = el("span", "tv-eq-fill");
+          rail.appendChild(fill);
+          var knob = el("span", "tv-eq-knob");
+          rail.appendChild(knob);
+          fader.appendChild(rail);
+          fader.appendChild(el("small", null, hz));
+          var controls = el("div", "tv-eq-controls");
+          controls.appendChild(dialogButton("−", null, function () { onTvAudioAction("equalizer-band", { band: index, delta: -1 }); }));
+          controls.appendChild(dialogButton("+", null, function () { onTvAudioAction("equalizer-band", { band: index, delta: 1 }); }));
+          fader.appendChild(controls);
+          faders.appendChild(fader);
+        });
+        panel.appendChild(faders);
+        panel.appendChild(dialogButton("Reset All", null, function () { onTvAudioAction("equalizer-reset"); }));
+      }
+    });
+  }
+
+  function openEqualizerPresetsDialog() {
+    showTvMenu("Equalizer Presets", "Choose a sound profile.", [
+      "Flat","Acoustic","Bass Booster","Bass Reducer","Classical","Electronic","Hip-Hop","Jazz","Loudness","Rock","Spoken Word","Treble Booster","Treble Reducer","Vocal Booster","Small Speakers","Late Night"
+    ].map(function (name) {
+      return { label: name, onClick: function () { onTvAudioAction("equalizer-preset", name); } };
+    }), { push: true });
+  }
+
+  function openLyricsSourcesDialog() {
+    showTvMenu("Lyrics Sources", "Select providers and arrange the order used to find synced lyrics.", [
+      { label: "lrc.red", description: "Apple timings by recording, syllable by syllable.", value: "On" },
+      { label: "BiniLyrics", description: "Apple timings matched on the recording itself.", value: "On" },
+      { label: "BetterLyrics", description: "Apple Music timings, word by word.", value: "On" },
+      { label: "PaxSenix", description: "Apple Music timings through the original provider.", value: "On" },
+      { label: "LyricsPlus", description: "Syllable-by-syllable community mirrors.", value: "On" },
+      { label: "Unison", description: "Lyrics contributed by listeners.", value: "On" },
+      { label: "YouTube captions", description: "Timed captions from the playing video.", value: "On" },
+      { label: "KuGou", description: "Whole-line lyrics.", value: "On" },
+      { label: "LRCLIB", description: "Whole-line LRC database.", value: "On" },
+      { label: "Musixmatch", description: "Whole-line lyrics.", value: "On" },
+      { label: "Genius", description: "Plain text fallback.", value: "On" },
+      { label: "Prefer Word-Synced", description: "Prefer word-by-word timing when available.", value: "On" },
+      { label: "Reset to Default", onClick: function () { onTvLyricsAction("reset-providers"); } },
+      { label: "Done", onClick: function () { closeTvDialog(); } }
+    ], { push: true, wide: true });
+  }
+
+  function openAppearanceDialog() {
+    showTvMenu("Appearance", "Choose the background behind BitChord's pages.", [
+      { label: "Dark", description: "The default charcoal canvas.", value: "Selected", onClick: function () { onTvDisplayAction("theme", "dark"); } },
+      { label: "OLED", description: "Pure black background.", onClick: function () { onTvDisplayAction("theme", "oled"); } },
+      { label: "Midnight", description: "Deep navy and sapphire.", onClick: function () { onTvDisplayAction("theme", "midnight"); } }
+    ], { push: true });
+  }
+
+  function openRefreshRateDialog() {
+    showTvMenu("Refresh Rate", "Choose how often the screen redraws while you browse.", [
+      { label: "System Default", value: "Recommended", onClick: function () { onTvDisplayAction("refresh-rate", "system"); } },
+      { label: "Smooth 60 Hz", onClick: function () { onTvDisplayAction("refresh-rate", 60); } },
+      { label: "Ultra 120 Hz", description: "Only available on supported displays.", onClick: function () { onTvDisplayAction("refresh-rate", 120); } }
+    ], { push: true });
+  }
+
+  function openScrobbleDialog() {
+    showTvMenu("Scrobbling", "Connect these on the BitChord phone app; the TV uses the same accounts.", [
+      { label: "Last.fm", description: "Listening history and scrobbles.", value: "Not Connected" },
+      { label: "ListenBrainz", description: "Open listening history.", value: "Not Connected" },
+      { label: "OK", onClick: function () { closeTvDialog(); } }
+    ], { push: true });
+  }
+
+  function openDiscordDialog() {
+    showTvMenu("Discord", "Show what you're listening to in your Discord status.", [], {
+      push: true, wide: true,
+      content: function (panel) {
+        var input = el("input", "tv-dialog-input");
+        input.type = "text";
+        input.placeholder = "Discord Token";
+        input.setAttribute("data-focus", "");
+        panel.appendChild(input);
+        panel.appendChild(dialogButton("Turn On", null, function () { onTvConnectionAction("discord-enable", input.value); }, "is-primary"));
+        panel.appendChild(dialogButton("Turn Off", null, function () { onTvConnectionAction("discord-disable"); }));
+      }
+    });
+  }
+
+  function openAboutDialog() {
+    showTvMenu("BitChord", "Version 0.2.0 · webOS TV", [
+      { label: "Kushagra Singh", value: "Creator" },
+      { label: "Nithyanantha", value: "TV App" },
+      { label: "GNU General Public License v3", description: "Free software. Not affiliated with YouTube or Google." },
+      { label: "OK", onClick: function () { closeTvDialog(); } }
+    ], { push: true });
+  }
+
+  function openUpdateDialog() {
+    showTvMenu("Software Update", "A newer version of BitChord may be available.", [
+      { label: "Check for Updates", description: "Connect the update service in the implementation pass.", onClick: function () { onTvGeneralAction("check-update"); } },
+      { label: "Download and Install", onClick: function () { onTvGeneralAction("download-update"); } },
+      { label: "Not Now", onClick: function () { closeTvDialog(); } }
+    ], { push: true });
+  }
+
+  function openSongActions() {
+    var title = current ? current.title : "No song selected";
+    showTvMenu(title, current ? current.artist : "Track actions", [
+      { label: "Play Next", description: "Add this song after the current track.", chevron: true, onClick: function () { onTvSongAction("play-next"); } },
+      { label: "Play Last", description: "Add this song to the end of the queue.", chevron: true, onClick: function () { onTvSongAction("play-last"); } },
+      { label: "Start Station", chevron: true, onClick: function () { onTvSongAction("start-station"); } },
+      { label: isFav(current) ? "Unlove" : "Love", value: isFav(current) ? "♥" : "♡", onClick: function () { onTvSongAction("toggle-like"); } },
+      { label: "Add to Playlist…", chevron: true, onClick: function () { openPlaylistDialog(); } },
+      { label: "Go to Album", chevron: true, onClick: function () { onTvSongAction("open-album"); } },
+      { label: "Go to Artist", chevron: true, onClick: function () { onTvSongAction("open-artist"); } },
+      { label: "Equalizer", chevron: true, onClick: function () { openEqualizerDialog(); } },
+      { label: "Sleep Timer", value: "Off", chevron: true, onClick: function () { openSleepTimerDialog(); } },
+      { label: "Stats for Nerds", value: "Off", onClick: function () { onTvSongAction("toggle-stats"); } }
+    ], { push: false, wide: true });
+  }
+
+  function openSettingsAction(action) {
+    var row = $('[data-ui-action="' + action + '"]');
+    var description = row && row.getAttribute("data-description");
+    var toggles = {
+      automix: ["Off", "On"], autoplay: ["Off", "On"], "skip-silence": ["Off", "On"],
+      "spatial-audio": ["Off", "On"], "sound-check": ["Off", "On"], "usb-dac": ["Off", "On"],
+      "synced-lyrics": ["Off", "On"], "motion-artwork": ["Off", "On"],
+      "motion-artwork-lyrics": ["Off", "On"], stats: ["Off", "On"],
+      "reduce-motion": ["Off", "On"], "reduce-transparency": ["Off", "On"]
+    };
+    var choices = {
+      automix: ["Off", "On"], autoplay: ["Off", "On"], "skip-silence": ["Off", "On"],
+      "spatial-audio": ["Off", "On"], "sound-check": ["Off", "On"], "usb-dac": ["Off", "On"],
+      "synced-lyrics": ["Off", "On"], "motion-artwork": ["Off", "On"],
+      "motion-artwork-lyrics": ["Off", "On"], stats: ["Off", "On"],
+      "reduce-motion": ["Off", "On"], "reduce-transparency": ["Off", "On"],
+      crossfade: ["Off", "3 seconds", "6 seconds", "10 seconds"],
+      "player-background": ["Artwork Colours", "AMOLED Black"],
+      "interface-size": ["80%", "90%", "100%", "110%", "120%", "130%"]
+    };
+    var labels = {
+      account: "Account", equalizer: "Equalizer", "lyrics-sources": "Lyrics Sources",
+      appearance: "Appearance", "refresh-rate": "Refresh Rate", scrobbling: "Scrobbling",
+      discord: "Discord", "software-update": "Software Update", about: "About",
+      "set-up-again": "Set Up Again"
+    };
+    if (action === "account") return openProfileSwitcher();
+    if (action === "equalizer") return openEqualizerDialog();
+    if (action === "lyrics-sources") return openLyricsSourcesDialog();
+    if (action === "appearance") return openAppearanceDialog();
+    if (action === "refresh-rate") return openRefreshRateDialog();
+    if (action === "scrobbling") return openScrobbleDialog();
+    if (action === "discord") return openDiscordDialog();
+    if (action === "software-update") return openUpdateDialog();
+    if (action === "about") return openAboutDialog();
+    if (action === "set-up-again") {
+      return showTvMenu("Set Up Again", "Run the first-time TV setup again?", [
+        { label: "Start Setup", destructive: true, onClick: function () { onTvGeneralAction("run-setup-again"); } },
+        { label: "Cancel", onClick: function () { closeTvDialog(); } }
+      ], { push: true });
+    }
+    var options = choices[action] || toggles[action] || [];
+    showTvMenu(labels[action] || (row ? $("strong", row).textContent : "Settings"), description,
+      options.map(function (value) {
+        return { label: value, onClick: function () {
+          if (action === "crossfade") onTvPlaybackAction(action, value);
+          else if (action === "synced-lyrics") onTvLyricsAction(action, value);
+          else if (action === "spatial-audio" || action === "sound-check" || action === "usb-dac") onTvAudioAction(action, value);
+          else onTvDisplayAction(action, value);
+        }};
+      }), { push: true });
+  }
+
+  function onSettingsRowClick(event) {
+    var button = event.target && event.target.closest ? event.target.closest("[data-ui-action]") : null;
+    if (!button) return;
+    event.preventDefault();
+    openSettingsAction(button.getAttribute("data-ui-action"));
+  }
+
+  if ($("#settings-list")) $("#settings-list").addEventListener("click", onSettingsRowClick);
+  if ($("#np-more")) $("#np-more").addEventListener("click", openSongActions);
+
 
   function setSelectedTab(tab) {
     if (!tab) return;
@@ -415,7 +825,7 @@
   var tabFocusTimer = null;
 
   function visible(e) { return !!e && e.offsetParent !== null && !e.disabled; }
-  function currentScreen() { return $("#screen-" + selectedPage); }
+  function currentScreen() { return activeDialog || $("#screen-" + selectedPage); }
   function setFocusedControl(element) {
     $$("[data-focus].is-focused").forEach(function (item) { item.classList.remove("is-focused"); });
     if (element && element.matches && element.matches("[data-focus]")) element.classList.add("is-focused");
@@ -524,7 +934,7 @@
       return;
     }
     if (element === account) {
-      notify("Sign-in is not available yet. Favorites and history are saved on this TV.");
+      openAccountDialog();
     }
   }
 
@@ -584,6 +994,7 @@
     // Back (461 on webOS): shelf -> tab bar -> Home; on Home let webOS close the app.
     if (key === "Escape" || key === "Backspace" || key === "BrowserBack" || code === 461 || code === 10009) {
       if (typing) return; // Back closes the on-screen keyboard
+      if (activeDialog) { event.preventDefault(); closeTvDialog(); return; }
       var isTab = active && active.hasAttribute && active.hasAttribute("data-tab");
       if (toast && toast.classList.contains("is-visible")) {
         event.preventDefault();
