@@ -452,8 +452,8 @@
 
   function openSignInPhoneDialog() {
     showTvMenu("Sign In with Your Phone", "Connect your phone to the same Wi-Fi as this TV.", [
-      { label: "QR code placeholder", description: "The live QR code and local sign-in server will be added by the implementation AI." },
-      { label: "Scan the code with your phone", description: "Follow the steps on your phone. This TV signs in by itself." },
+      { label: "QR code placeholder", description: "The live QR code and local sign-in server will be added by the implementation AI.", disabled: true },
+      { label: "Scan the code with your phone", description: "Follow the steps on your phone. This TV signs in by itself.", disabled: true },
       { label: "Back", onClick: function () { closeTvDialog(); } }
     ], { push: true, wide: true, cancel: false, compact: true });
   }
@@ -722,6 +722,7 @@
       ], { push: true, cancel: false });
     }
     var options = choices[action] || toggles[action] || [];
+    if (!options.length) return;
     showTvMenu(labels[action] || (row ? $("strong", row).textContent : "Settings"), description,
       options.map(function (value) {
         return { label: value, onClick: function () {
