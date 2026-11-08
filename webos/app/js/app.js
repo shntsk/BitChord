@@ -303,7 +303,8 @@
   function dialogButton(label, value, callback, className) {
     var button = el("button", "tv-dialog-row" + (className ? " " + className : ""));
     button.type = "button";
-    button.setAttribute("data-focus", "");
+    button.disabled = !!(value && value.disabled);
+    if (!button.disabled) button.setAttribute("data-focus", "");
     var copy = el("span", "tv-dialog-row-copy");
     copy.appendChild(el("strong", null, label));
     if (value && value.description) copy.appendChild(el("small", null, value.description));
@@ -388,7 +389,9 @@
     dialogRoot.appendChild(overlay);
     window.setTimeout(function () {
       overlay.classList.add("is-open");
-      var first = $("[data-focus]", overlay);
+      var first = $$("[data-focus]", overlay).filter(function (item) {
+        return !item.disabled && visible(item);
+      })[0];
       if (first) focus(first, false);
     }, 20);
   }
@@ -437,14 +440,14 @@
         { label: "Sign In on This TV", description: "Use the remote to sign in to Google.", chevron: true, onClick: function () { openSignInTvDialog(); } },
         { label: "Sign In with Your Phone", description: "Scan a code with a phone on the same Wi-Fi.", chevron: true, onClick: function () { openSignInPhoneDialog(); } },
         { label: "Not Now", onClick: function () { closeTvDialog(); } }
-      ], { cancel: false, compact: true });
+      ], { cancel: false, compact: true, push: !!activeDialog });
   }
 
   function openSignInTvDialog() {
     showTvMenu("Sign In to YouTube Music", "The Google sign-in page will be embedded here in the implementation pass.", [
       { label: "Done", onClick: function () { onTvAccountAction("capture-sign-in"); closeTvDialog(); } },
       { label: "Cancel", onClick: function () { closeTvDialog(); } }
-    ], { push: true, wide: true });
+    ], { push: true, wide: true, cancel: false, compact: true });
   }
 
   function openSignInPhoneDialog() {
@@ -452,7 +455,7 @@
       { label: "QR code placeholder", description: "The live QR code and local sign-in server will be added by the implementation AI." },
       { label: "Scan the code with your phone", description: "Follow the steps on your phone. This TV signs in by itself." },
       { label: "Back", onClick: function () { closeTvDialog(); } }
-    ], { push: true, wide: true });
+    ], { push: true, wide: true, cancel: false, compact: true });
   }
 
   function openPinDialog() {
@@ -491,8 +494,7 @@
   function openAccountSettingsDialog() {
     showTvMenu("Account Settings", "Personal · YouTube Music", [
       { label: "App Lock (4-Digit PIN)", description: "Protect this profile with a PIN.", value: "Off", chevron: true, onClick: function () { openPinDialog(); } },
-      { label: "Sign Out", description: "Remove this account from TV.", chevron: true, destructive: true, onClick: function () { onTvAccountAction("sign-out"); } },
-      { label: "Done", onClick: function () { closeTvDialog(); } }
+      { label: "Sign Out", description: "Remove this account from TV.", chevron: true, destructive: true, onClick: function () { onTvAccountAction("sign-out"); } }
     ], { push: true });
   }
 
@@ -572,22 +574,37 @@
   }
 
   function openLyricsSourcesDialog() {
-    showTvMenu("Lyrics Sources", "Select providers and arrange the order used to find synced lyrics.", [
-      { label: "lrc.red", description: "Apple timings by recording, syllable by syllable.", value: "On" },
-      { label: "BiniLyrics", description: "Apple timings matched on the recording itself.", value: "On" },
-      { label: "BetterLyrics", description: "Apple Music timings, word by word.", value: "On" },
-      { label: "PaxSenix", description: "Apple Music timings through the original provider.", value: "On" },
-      { label: "LyricsPlus", description: "Syllable-by-syllable community mirrors.", value: "On" },
-      { label: "Unison", description: "Lyrics contributed by listeners.", value: "On" },
-      { label: "YouTube captions", description: "Timed captions from the playing video.", value: "On" },
-      { label: "KuGou", description: "Whole-line lyrics.", value: "On" },
-      { label: "LRCLIB", description: "Whole-line LRC database.", value: "On" },
-      { label: "Musixmatch", description: "Whole-line lyrics.", value: "On" },
-      { label: "Genius", description: "Plain text fallback.", value: "On" },
-      { label: "Prefer Word-Synced", description: "Prefer word-by-word timing when available.", value: "On" },
-      { label: "Reset to Default", onClick: function () { onTvLyricsAction("reset-providers"); } },
-      { label: "Done", onClick: function () { closeTvDialog(); } }
-    ], { push: true, wide: true });
+    var sources = [
+      { label: "lrc.red", description: "Apple timings by recording, syllable by syllable." },
+      { label: "BiniLyrics", description: "Apple timings matched on the recording itself." },
+      { label: "BetterLyrics", description: "Apple Music timings, word by word." },
+      { label: "PaxSenix", description: "Apple Music timings through the original provider." },
+      { label: "LyricsPlus", description: "Syllable-by-syllable community mirrors." },
+      { label: "Unison", description: "Lyrics contributed by listeners." },
+      { label: "YouTube captions", description: "Timed captions from the playing video." },
+      { label: "KuGou", description: "Whole-line lyrics." },
+      { label: "LRCLIB", description: "Whole-line LRC database." },
+      { label: "Musixmatch", description: "Whole-line lyrics." },
+      { label: "Genius", description: "Plain text fallback." }
+    ];
+    var rows = sources.map(function (source) {
+      return {
+        label: source.label,
+        description: source.description,
+        value: "On",
+        onClick: function () { onTvLyricsAction("toggle-provider", source.label); }
+      };
+    });
+    rows.push({
+      label: "Prefer Word-Synced",
+      description: "Prefer word-by-word timing when available.",
+      value: "On",
+      onClick: function () { onTvLyricsAction("toggle-word-synced"); }
+    });
+    rows.push({ label: "Reset to Default", onClick: function () { onTvLyricsAction("reset-providers"); } });
+    rows.push({ label: "Done", onClick: function () { closeTvDialog(); } });
+    showTvMenu("Lyrics Sources", "Select providers and arrange the order used to find synced lyrics.", rows,
+      { push: true, wide: true, cancel: false });
   }
 
   function openAppearanceDialog() {
@@ -608,10 +625,10 @@
 
   function openScrobbleDialog() {
     showTvMenu("Scrobbling", "Connect these on the BitChord phone app; the TV uses the same accounts.", [
-      { label: "Last.fm", description: "Listening history and scrobbles.", value: "Not Connected" },
-      { label: "ListenBrainz", description: "Open listening history.", value: "Not Connected" },
+      { label: "Last.fm", description: "Listening history and scrobbles.", value: "Not Connected", disabled: true },
+      { label: "ListenBrainz", description: "Open listening history.", value: "Not Connected", disabled: true },
       { label: "OK", onClick: function () { closeTvDialog(); } }
-    ], { push: true });
+    ], { push: true, cancel: false });
   }
 
   function openDiscordDialog() {
@@ -630,12 +647,12 @@
   }
 
   function openAboutDialog() {
-    showTvMenu("BitChord", "Version 0.2.0 · webOS TV", [
-      { label: "Kushagra Singh", value: "Creator" },
-      { label: "Nithyanantha", value: "TV App" },
-      { label: "GNU General Public License v3", description: "Free software. Not affiliated with YouTube or Google." },
+    showTvMenu("BitChord", "Version 0.3.0 · webOS TV", [
+      { label: "Kushagra Singh", value: "Creator", disabled: true },
+      { label: "Nithyanantha", value: "TV App", disabled: true },
+      { label: "GNU General Public License v3", description: "Free software. Not affiliated with YouTube or Google.", disabled: true },
       { label: "OK", onClick: function () { closeTvDialog(); } }
-    ], { push: true });
+    ], { push: true, cancel: false });
   }
 
   function openUpdateDialog() {
@@ -643,7 +660,7 @@
       { label: "Check for Updates", description: "Connect the update service in the implementation pass.", onClick: function () { onTvGeneralAction("check-update"); } },
       { label: "Download and Install", onClick: function () { onTvGeneralAction("download-update"); } },
       { label: "Not Now", onClick: function () { closeTvDialog(); } }
-    ], { push: true });
+    ], { push: true, cancel: false });
   }
 
   function openSongActions(songOverride) {
@@ -702,16 +719,23 @@
       return showTvMenu("Set Up Again", "Run the first-time TV setup again?", [
         { label: "Start Setup", destructive: true, onClick: function () { onTvGeneralAction("run-setup-again"); } },
         { label: "Cancel", onClick: function () { closeTvDialog(); } }
-      ], { push: true });
+      ], { push: true, cancel: false });
     }
     var options = choices[action] || toggles[action] || [];
     showTvMenu(labels[action] || (row ? $("strong", row).textContent : "Settings"), description,
       options.map(function (value) {
         return { label: value, onClick: function () {
-          if (action === "crossfade") onTvPlaybackAction(action, value);
-          else if (action === "synced-lyrics") onTvLyricsAction(action, value);
-          else if (action === "spatial-audio" || action === "sound-check" || action === "usb-dac") onTvAudioAction(action, value);
-          else onTvDisplayAction(action, value);
+          if (action === "crossfade" || action === "automix" || action === "autoplay" || action === "skip-silence") {
+            onTvPlaybackAction(action, value);
+          } else if (action === "synced-lyrics") {
+            onTvLyricsAction(action, value);
+          } else if (action === "spatial-audio" || action === "sound-check" || action === "usb-dac") {
+            onTvAudioAction(action, value);
+          } else if (action === "stats") {
+            onTvSongAction("toggle-stats", value);
+          } else {
+            onTvDisplayAction(action, value);
+          }
         }};
       }), { push: true });
   }
@@ -740,7 +764,7 @@
       });
     });
   }
-  if ($("#np-more")) $("#np-more").addEventListener("click", openSongActions);
+  if ($("#np-more")) $("#np-more").addEventListener("click", function () { openSongActions(); });
 
 
   function setSelectedTab(tab) {
