@@ -280,7 +280,7 @@
     "now-playing": { build: function () {}, ttl: Infinity },
     settings: { build: buildSettings, ttl: 0 }
   };
-  var tabs = $("[data-tab]");
+  var tabs = $$("[data-tab]");
   var account = $(".account");
 
   // ---------------------------------------------------------------------------
