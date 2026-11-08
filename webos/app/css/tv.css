@@ -566,3 +566,12 @@ button:focus, button:focus-visible { outline: none; }
   .tv-profile-card,
   .settings-row { transition-duration: .01ms !important; }
 }
+
+
+/* Vertical spacing fallback for flex columns on Chromium 79. */
+.settings-row-copy,
+.tv-dialog-row-copy,
+.tv-eq-fader { gap: 0; }
+.settings-row-copy > * + * { margin-top: calc(var(--u)*2); }
+.tv-dialog-row-copy > * + * { margin-top: calc(var(--u)*3); }
+.tv-eq-fader > * + * { margin-top: calc(var(--u)*8); }
