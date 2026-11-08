@@ -142,6 +142,7 @@
   function songCards(list, featured) {
     return list.map(function (s, i) {
       var item = card(featured ? "featured" : "recent", s.title, s.artist, s.art, function () { play(list, i); });
+      item._song = s;
       item.addEventListener("contextmenu", function (event) {
         event.preventDefault();
         openSongActions(s);
@@ -432,10 +433,40 @@
     showTvMenu("Sign In to YouTube Music",
       "Your library, playlists and recommendations follow your account.",
       [
-        { label: "Sign In on This TV", description: "Use the remote to sign in to Google.", chevron: true, onClick: function () { onTvAccountAction("sign-in-on-tv"); } },
-        { label: "Sign In with Your Phone", description: "Scan a code with a phone on the same Wi-Fi.", chevron: true, onClick: function () { onTvAccountAction("phone-qr-sign-in"); } },
+        { label: "Sign In on This TV", description: "Use the remote to sign in to Google.", chevron: true, onClick: function () { openSignInTvDialog(); } },
+        { label: "Sign In with Your Phone", description: "Scan a code with a phone on the same Wi-Fi.", chevron: true, onClick: function () { openSignInPhoneDialog(); } },
         { label: "Not Now", onClick: function () { closeTvDialog(); } }
       ]);
+  }
+
+  function openSignInTvDialog() {
+    showTvMenu("Sign In to YouTube Music", "The Google sign-in page will be embedded here in the implementation pass.", [
+      { label: "Done", onClick: function () { onTvAccountAction("capture-sign-in"); closeTvDialog(); } },
+      { label: "Cancel", onClick: function () { closeTvDialog(); } }
+    ], { push: true, wide: true });
+  }
+
+  function openSignInPhoneDialog() {
+    showTvMenu("Sign In with Your Phone", "Connect your phone to the same Wi-Fi as this TV.", [
+      { label: "QR code placeholder", description: "The live QR code and local sign-in server will be added by the implementation AI." },
+      { label: "Scan the code with your phone", description: "Follow the steps on your phone. This TV signs in by itself." },
+      { label: "Back", onClick: function () { closeTvDialog(); } }
+    ], { push: true, wide: true });
+  }
+
+  function openPinDialog() {
+    showTvMenu("Set 4-Digit PIN", "Create a PIN to protect this profile.", [], {
+      push: true,
+      content: function (panel) {
+        var dots = el("div", "tv-pin-dots", "○  ○  ○  ○");
+        panel.appendChild(dots);
+        var keypad = el("div", "tv-pin-grid");
+        ["1","2","3","4","5","6","7","8","9","C","0","⌫"].forEach(function (key) {
+          keypad.appendChild(dialogButton(key, null, function () { onTvAccountAction("pin-key", key); }));
+        });
+        panel.appendChild(keypad);
+      }
+    });
   }
 
   function openProfileSwitcher() {
@@ -458,7 +489,7 @@
 
   function openAccountSettingsDialog() {
     showTvMenu("Account Settings", "Personal · YouTube Music", [
-      { label: "App Lock (4-Digit PIN)", description: "Protect this profile with a PIN.", value: "Off", chevron: true, onClick: function () { onTvAccountAction("profile-pin"); } },
+      { label: "App Lock (4-Digit PIN)", description: "Protect this profile with a PIN.", value: "Off", chevron: true, onClick: function () { openPinDialog(); } },
       { label: "Sign Out", description: "Remove this account from TV.", chevron: true, destructive: true, onClick: function () { onTvAccountAction("sign-out"); } },
       { label: "Done", onClick: function () { closeTvDialog(); } }
     ], { push: true });
@@ -691,7 +722,21 @@
     openSettingsAction(button.getAttribute("data-ui-action"));
   }
 
-  if ($("#settings-list")) $("#settings-list").addEventListener("click", onSettingsRowClick);
+  if ($("#settings-list")) {
+    $("#settings-list").addEventListener("click", onSettingsRowClick);
+    $("#settings-list").addEventListener("focusin", function (event) {
+      var row = event.target && event.target.closest ? event.target.closest("[data-description]") : null;
+      if (!row) return;
+      var description = $("#settings-description");
+      if (description) {
+        description.classList.add("is-changing");
+        window.setTimeout(function () {
+          description.textContent = row.getAttribute("data-description");
+          description.classList.remove("is-changing");
+        }, 100);
+      }
+    });
+  }
   if ($("#np-more")) $("#np-more").addEventListener("click", openSongActions);
 
 
@@ -971,6 +1016,11 @@
     var dir = dirs[key] || (code === 37 ? "left" : code === 39 ? "right" : code === 38 ? "up" : code === 40 ? "down" : null);
 
     // Media keys on the LG remote.
+    if ((code === 82 || code === 457) && active && active.matches && active.matches(".music-card")) {
+      event.preventDefault();
+      openSongActions(active._song || current);
+      return;
+    }
     if (code === 415 || code === 19 || code === 179) { event.preventDefault(); togglePlay(); return; }
     if (code === 417) { event.preventDefault(); if (current) audio.currentTime += 10; return; }
     if (code === 412) { event.preventDefault(); if (current) audio.currentTime = Math.max(0, audio.currentTime - 10); return; }
