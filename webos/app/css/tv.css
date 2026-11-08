@@ -382,3 +382,43 @@ button:focus, button:focus-visible { outline: none; }
 .tv-pin-dots{margin:calc(var(--u)*14) auto calc(var(--u)*20);text-align:center;letter-spacing:.14em;font-size:calc(var(--u)*25);color:rgba(255,255,255,.88)}
 .tv-pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*6);max-width:calc(var(--u)*260);margin:0 auto}
 .tv-pin-grid .tv-dialog-row{justify-content:center;text-align:center;min-height:calc(var(--u)*42)}
+
+
+/* webOS 6.5 / Chromium 79 dialog sizing and scroll behavior. */
+.tv-dialog-overlay{overflow:hidden}
+.tv-dialog-panel{width:66vw;max-width:700px;min-width:480px;overflow-x:hidden}
+.tv-dialog-panel.is-compact{width:62vw;max-width:640px;min-width:460px;max-height:72vh;padding:24px 26px}
+.tv-dialog-panel.is-compact .tv-dialog-title{font-size:24px}
+.tv-dialog-panel.is-compact .tv-dialog-message{margin:7px auto 15px}
+.tv-dialog-panel.is-compact .tv-dialog-list{max-height:none;overflow:visible}
+.tv-dialog-list{overflow-x:hidden;-ms-overflow-style:none}
+.tv-dialog-list::-webkit-scrollbar,
+.tv-dialog-panel::-webkit-scrollbar,
+.tv-profile-switcher::-webkit-scrollbar{display:none;width:0;height:0;background:transparent}
+.tv-dialog-row.is-focused,
+.tv-dialog-row:focus{background:#f6f6f7;color:#141418!important}
+.tv-dialog-row.is-focused strong,
+.tv-dialog-row:focus strong{color:#141418!important}
+.tv-dialog-row.is-focused small,
+.tv-dialog-row:focus small{color:rgba(20,20,24,.64)!important}
+.tv-dialog-row.is-focused .tv-dialog-value,
+.tv-dialog-row:focus .tv-dialog-value,
+.tv-dialog-row.is-focused .tv-dialog-chevron,
+.tv-dialog-row:focus .tv-dialog-chevron{color:rgba(20,20,24,.58)!important}
+
+/* Profile picker stays inside the TV safe area instead of forcing overflow. */
+.tv-profile-switcher{width:100%;height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;-ms-overflow-style:none;padding:28px 42px}
+.tv-profile-grid{width:100%;max-width:920px;flex-wrap:wrap;gap:18px;margin:18px auto 22px}
+.tv-profile-card{flex:0 1 142px;width:142px;min-width:142px;min-height:142px}
+.tv-profile-avatar{width:64px;height:64px;font-size:28px}
+.tv-profile-actions{max-width:500px;flex-wrap:wrap;justify-content:center;margin:0 auto}
+.tv-profile-actions .tv-dialog-row{min-width:190px}
+@media(max-width:1000px){
+  .tv-dialog-panel,.tv-dialog-panel.is-wide{width:88vw;min-width:0;max-width:88vw}
+  .tv-dialog-panel.is-compact{width:84vw;min-width:0;max-width:84vw}
+  .tv-profile-switcher{padding:20px}
+  .tv-profile-card{flex-basis:118px;width:118px;min-width:118px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tv-dialog-overlay,.tv-dialog-panel,.tv-profile-switcher,.tv-dialog-row,.tv-profile-card{transition-duration:.01ms!important}
+}
