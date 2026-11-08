@@ -354,7 +354,7 @@
       }
       overlay.appendChild(full);
     } else {
-      var panel = el("section", "tv-dialog-panel" + (config.wide ? " is-wide" : ""));
+      var panel = el("section", "tv-dialog-panel" + (config.wide ? " is-wide" : "") + (config.compact ? " is-compact" : ""));
       panel.setAttribute("role", "dialog");
       panel.setAttribute("aria-modal", "true");
       panel.appendChild(el("h2", "tv-dialog-title", config.title || ""));
@@ -425,6 +425,7 @@
       fullscreen: !!options.fullscreen,
       profiles: options.profiles || null,
       cancel: options.cancel,
+      compact: !!options.compact,
       content: options.content
     }, !!options.push);
   }
@@ -436,7 +437,7 @@
         { label: "Sign In on This TV", description: "Use the remote to sign in to Google.", chevron: true, onClick: function () { openSignInTvDialog(); } },
         { label: "Sign In with Your Phone", description: "Scan a code with a phone on the same Wi-Fi.", chevron: true, onClick: function () { openSignInPhoneDialog(); } },
         { label: "Not Now", onClick: function () { closeTvDialog(); } }
-      ]);
+      ], { cancel: false, compact: true });
   }
 
   function openSignInTvDialog() {
@@ -688,7 +689,7 @@
       discord: "Discord", "software-update": "Software Update", about: "About",
       "set-up-again": "Set Up Again"
     };
-    if (action === "account") return openProfileSwitcher();
+    if (action === "account") return openAccountDialog();
     if (action === "equalizer") return openEqualizerDialog();
     if (action === "lyrics-sources") return openLyricsSourcesDialog();
     if (action === "appearance") return openAppearanceDialog();
@@ -723,18 +724,20 @@
   }
 
   if ($("#settings-list")) {
-    $("#settings-list").addEventListener("click", onSettingsRowClick);
-    $("#settings-list").addEventListener("focusin", function (event) {
-      var row = event.target && event.target.closest ? event.target.closest("[data-description]") : null;
-      if (!row) return;
-      var description = $("#settings-description");
-      if (description) {
+    $$("[data-ui-action]", $("#settings-list")).forEach(function (row) {
+      row.addEventListener("click", function (event) {
+        event.preventDefault();
+        openSettingsAction(row.getAttribute("data-ui-action"));
+      });
+      row.addEventListener("focus", function () {
+        var description = $("#settings-description");
+        if (!description) return;
         description.classList.add("is-changing");
         window.setTimeout(function () {
-          description.textContent = row.getAttribute("data-description");
+          description.textContent = row.getAttribute("data-description") || "";
           description.classList.remove("is-changing");
         }, 100);
-      }
+      });
     });
   }
   if ($("#np-more")) $("#np-more").addEventListener("click", openSongActions);
