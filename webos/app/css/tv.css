@@ -376,3 +376,9 @@ button:focus, button:focus-visible { outline: none; }
 .tv-profile-actions .tv-dialog-row:first-child{flex:1}
 @media(max-width:1000px){.settings-summary{flex-basis:30%;padding-right:calc(var(--u)*15)}.settings-summary p{font-size:calc(var(--u)*11)}.settings-content{padding-left:calc(var(--u)*3)}.settings-row small{display:none}.tv-dialog-panel,.tv-dialog-panel.is-wide{width:88vw}.tv-eq-rail{height:calc(var(--u)*80)}}
 @media(prefers-reduced-motion:reduce){.tv-dialog-overlay,.tv-dialog-panel,.tv-profile-switcher,.tv-dialog-row,.settings-row{transition-duration:.01ms!important}}
+
+.settings-summary p{transition:opacity 130ms ease,transform 180ms ease}
+.settings-summary p.is-changing{opacity:0;transform:translateY(calc(var(--u)*3))}
+.tv-pin-dots{margin:calc(var(--u)*14) auto calc(var(--u)*20);text-align:center;letter-spacing:.14em;font-size:calc(var(--u)*25);color:rgba(255,255,255,.88)}
+.tv-pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*6);max-width:calc(var(--u)*260);margin:0 auto}
+.tv-pin-grid .tv-dialog-row{justify-content:center;text-align:center;min-height:calc(var(--u)*42)}
