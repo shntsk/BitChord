@@ -294,3 +294,85 @@ button:focus, button:focus-visible { outline: none; }
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Settings hierarchy copied from the Android TV information architecture. */
+.settings-shell{position:absolute;inset:calc(var(--u)*69) 0 0;display:flex;min-height:0}
+.settings-summary{flex:0 0 34%;padding:calc(var(--u)*34) calc(var(--u)*35) 0 var(--safe-x);display:flex;flex-direction:column;align-items:flex-start}
+.settings-mark{width:calc(var(--u)*74);height:calc(var(--u)*74);object-fit:contain;margin-bottom:calc(var(--u)*24);opacity:.94}
+.settings-summary h1{font-size:calc(var(--u)*28);letter-spacing:-.7px;margin:0 0 calc(var(--u)*11)}
+.settings-summary p{max-width:calc(var(--u)*330);margin:0;color:var(--secondary);font-size:calc(var(--u)*14);line-height:1.5}
+.settings-summary .settings-preview-note{margin-top:calc(var(--u)*22);font-size:calc(var(--u)*10);color:rgba(255,255,255,.30)}
+.settings-content{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:calc(var(--u)*10) var(--safe-x) calc(var(--u)*48) calc(var(--u)*10);scrollbar-width:none}
+.settings-content::-webkit-scrollbar{display:none}
+.settings-group{margin:0 0 calc(var(--u)*18)}
+.settings-group h2{margin:0 0 calc(var(--u)*7);padding:0 calc(var(--u)*12);font-size:calc(var(--u)*12);font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.48)}
+.settings-row{width:100%;min-height:calc(var(--u)*48);display:flex;align-items:center;gap:calc(var(--u)*12);padding:calc(var(--u)*8) calc(var(--u)*14);margin:0 0 calc(var(--u)*4);border:1px solid rgba(255,255,255,.035);border-radius:calc(var(--u)*10);background:rgba(255,255,255,.045);color:#fff;text-align:left;cursor:pointer;transition:background 180ms ease,transform 220ms cubic-bezier(.2,.8,.2,1),box-shadow 180ms ease}
+.settings-row-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:calc(var(--u)*2)}
+.settings-row strong{font-size:calc(var(--u)*13);font-weight:600}
+.settings-row small{font-size:calc(var(--u)*10);font-weight:400;color:rgba(255,255,255,.48);line-height:1.35}
+.settings-value{flex:0 0 auto;font-size:calc(var(--u)*11);color:rgba(255,255,255,.52)}
+.settings-chevron{font-size:calc(var(--u)*24);line-height:.8;color:rgba(255,255,255,.36)}
+.settings-technical{padding-top:calc(var(--u)*13);border-top:1px solid var(--hairline)}
+.settings-technical p{color:var(--secondary);font-size:calc(var(--u)*11);margin:calc(var(--u)*5) calc(var(--u)*12)}
+.settings-technical input{width:100%;height:calc(var(--u)*38);padding:0 calc(var(--u)*12);margin:calc(var(--u)*5) 0 calc(var(--u)*13);border:1px solid rgba(255,255,255,.12);border-radius:calc(var(--u)*8);background:rgba(255,255,255,.06);color:#fff;font:inherit}
+.settings-row.is-focused,.settings-row:focus{outline:none;background:#fff;color:#101012;transform:scale(1.025);box-shadow:0 9px 24px rgba(0,0,0,.24)}
+.settings-row.is-focused small,.settings-row:focus small,.settings-row.is-focused .settings-value,.settings-row:focus .settings-value,.settings-row.is-focused .settings-chevron,.settings-row:focus .settings-chevron{color:rgba(0,0,0,.55)}
+.settings-technical button:focus{color:#101012;background:#fff}
+
+/* Shared TV dialog layer: fade + scale are paired on every sheet and pop-up. */
+#dialog-root{position:absolute;z-index:80;inset:0;pointer-events:none}
+.tv-dialog-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:calc(var(--u)*28);background:rgba(7,7,10,.91);opacity:0;pointer-events:auto;transition:opacity 190ms ease}
+.tv-dialog-overlay.is-open{opacity:1}
+.tv-dialog-overlay.is-closing{opacity:0}
+.tv-dialog-panel{width:min(72vw,calc(var(--u)*520));max-height:84vh;overflow-y:auto;padding:calc(var(--u)*25) calc(var(--u)*27);border:1px solid rgba(255,255,255,.075);border-radius:calc(var(--u)*18);background:linear-gradient(145deg,rgba(39,39,45,.98),rgba(19,19,23,.99));box-shadow:0 24px 80px rgba(0,0,0,.46);transform:translateY(calc(var(--u)*15)) scale(.965);transition:transform 220ms cubic-bezier(.2,.8,.2,1);scrollbar-width:none}
+.tv-dialog-panel::-webkit-scrollbar{display:none}
+.tv-dialog-overlay.is-open .tv-dialog-panel{transform:translateY(0) scale(1)}
+.tv-dialog-panel.is-wide{width:min(78vw,calc(var(--u)*650))}
+.tv-dialog-title{margin:0;text-align:center;font-size:calc(var(--u)*23);line-height:1.2;font-weight:700;letter-spacing:-.45px}
+.tv-dialog-message{max-width:calc(var(--u)*490);margin:calc(var(--u)*8) auto calc(var(--u)*18);text-align:center;font-size:calc(var(--u)*12);line-height:1.5;color:rgba(255,255,255,.58)}
+.tv-dialog-list{display:flex;flex-direction:column;gap:calc(var(--u)*5);max-height:58vh;overflow-y:auto;scrollbar-width:none}
+.tv-dialog-row{width:100%;min-height:calc(var(--u)*43);display:flex;align-items:center;gap:calc(var(--u)*12);padding:calc(var(--u)*9) calc(var(--u)*14);border:1px solid rgba(255,255,255,.025);border-radius:calc(var(--u)*10);background:rgba(255,255,255,.055);color:rgba(255,255,255,.94);text-align:left;cursor:pointer;transition:background 150ms ease,color 150ms ease,transform 210ms cubic-bezier(.2,.8,.2,1),box-shadow 180ms ease}
+.tv-dialog-row-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:calc(var(--u)*3)}
+.tv-dialog-row strong{font-size:calc(var(--u)*13);font-weight:600}
+.tv-dialog-row small{font-size:calc(var(--u)*10);line-height:1.35;color:rgba(255,255,255,.48)}
+.tv-dialog-value{font-size:calc(var(--u)*11);color:rgba(255,255,255,.52);white-space:nowrap}
+.tv-dialog-chevron{font-size:calc(var(--u)*23);color:rgba(255,255,255,.40)}
+.tv-dialog-row.is-focused,.tv-dialog-row:focus{outline:none;background:#fff;color:#111115;transform:scale(1.025);box-shadow:0 8px 22px rgba(0,0,0,.30)}
+.tv-dialog-row.is-focused small,.tv-dialog-row:focus small,.tv-dialog-row.is-focused .tv-dialog-value,.tv-dialog-row:focus .tv-dialog-value,.tv-dialog-row.is-focused .tv-dialog-chevron,.tv-dialog-row:focus .tv-dialog-chevron{color:rgba(0,0,0,.53)}
+.tv-dialog-row.is-destructive{color:#ff7777}
+.tv-dialog-footer{margin-top:calc(var(--u)*12);display:flex;justify-content:center}
+.tv-dialog-cancel{justify-content:center;max-width:calc(var(--u)*220);background:rgba(255,255,255,.09)}
+.tv-dialog-row.is-primary{margin-top:calc(var(--u)*14);justify-content:center;background:rgba(255,255,255,.20)}
+.tv-dialog-input{width:100%;height:calc(var(--u)*44);margin:calc(var(--u)*10) 0;padding:0 calc(var(--u)*14);border:1px solid rgba(255,255,255,.15);border-radius:calc(var(--u)*10);background:rgba(255,255,255,.07);color:#fff;font:inherit;font-size:calc(var(--u)*13)}
+.tv-dialog-input:focus{outline:none;background:#fff;color:#101012}
+.tv-dialog-artwork{display:block;width:calc(var(--u)*82);height:calc(var(--u)*82);object-fit:cover;border-radius:calc(var(--u)*9);margin:0 auto calc(var(--u)*15)}
+.tv-dialog-segments{display:flex;justify-content:center;gap:calc(var(--u)*7);margin:0 0 calc(var(--u)*18)}
+.tv-dialog-segments .tv-dialog-row{width:auto;min-width:calc(var(--u)*110);justify-content:center}
+.tv-dialog-segments .is-selected{background:rgba(255,255,255,.20)}
+.tv-eq-faders{display:flex;justify-content:space-between;gap:calc(var(--u)*8);padding:calc(var(--u)*13) calc(var(--u)*4) calc(var(--u)*19)}
+.tv-eq-fader{flex:1;display:flex;align-items:center;flex-direction:column;gap:calc(var(--u)*8)}
+.tv-eq-fader strong{font-size:calc(var(--u)*10);font-weight:500;color:rgba(255,255,255,.72)}
+.tv-eq-rail{position:relative;width:calc(var(--u)*7);height:calc(var(--u)*115);border-radius:99px;background:rgba(255,255,255,.15)}
+.tv-eq-fill{position:absolute;left:0;right:0;top:50%;height:50%;border-radius:99px;background:rgba(255,255,255,.78)}
+.tv-eq-knob{position:absolute;left:50%;top:50%;width:calc(var(--u)*17);height:calc(var(--u)*17);border:2px solid #24242a;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:0 2px 9px rgba(0,0,0,.4)}
+.tv-eq-fader small{font-size:calc(var(--u)*9);color:rgba(255,255,255,.60)}
+.tv-eq-controls{display:flex;gap:calc(var(--u)*3)}
+.tv-eq-controls .tv-dialog-row{width:calc(var(--u)*25);min-width:calc(var(--u)*25);height:calc(var(--u)*24);min-height:calc(var(--u)*24);padding:0;justify-content:center}
+.tv-profile-switcher{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--u)*34);transform:scale(.97);transition:transform 220ms cubic-bezier(.2,.8,.2,1)}
+.tv-dialog-overlay.is-open .tv-profile-switcher{transform:scale(1)}
+.tv-profile-mark{width:calc(var(--u)*60);height:calc(var(--u)*60);object-fit:contain;margin-bottom:calc(var(--u)*15)}
+.tv-profile-switcher h1{font-size:calc(var(--u)*29);margin:0 0 calc(var(--u)*8)}
+.tv-profile-switcher .tv-dialog-message{margin:0 0 calc(var(--u)*25)}
+.tv-profile-grid{display:flex;justify-content:center;gap:calc(var(--u)*22);margin:calc(var(--u)*12) 0 calc(var(--u)*25)}
+.tv-profile-card{width:calc(var(--u)*150);min-height:calc(var(--u)*165);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:calc(var(--u)*8);border:1px solid rgba(255,255,255,.08);border-radius:calc(var(--u)*15);background:rgba(255,255,255,.055);color:#fff;cursor:pointer;transition:transform 220ms cubic-bezier(.2,.8,.2,1),background 160ms ease}
+.tv-profile-avatar{width:calc(var(--u)*75);height:calc(var(--u)*75);display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(145deg,#d18c91,#543d65);font-size:calc(var(--u)*32);font-weight:700}
+.tv-profile-card strong{font-size:calc(var(--u)*13)}
+.tv-profile-card small{font-size:calc(var(--u)*10);color:rgba(255,255,255,.5)}
+.tv-profile-card.is-focused,.tv-profile-card:focus{outline:none;background:#fff;color:#111;transform:scale(1.08);box-shadow:0 13px 32px rgba(0,0,0,.32)}
+.tv-profile-card:focus small{color:rgba(0,0,0,.55)}
+.tv-profile-actions{width:min(calc(var(--u)*500),80vw);display:flex;gap:calc(var(--u)*7)}
+.tv-profile-actions .tv-dialog-row{justify-content:center}
+.tv-profile-actions .tv-dialog-row:first-child{flex:1}
+@media(max-width:1000px){.settings-summary{flex-basis:30%;padding-right:calc(var(--u)*15)}.settings-summary p{font-size:calc(var(--u)*11)}.settings-content{padding-left:calc(var(--u)*3)}.settings-row small{display:none}.tv-dialog-panel,.tv-dialog-panel.is-wide{width:88vw}.tv-eq-rail{height:calc(var(--u)*80)}}
+@media(prefers-reduced-motion:reduce){.tv-dialog-overlay,.tv-dialog-panel,.tv-profile-switcher,.tv-dialog-row,.settings-row{transition-duration:.01ms!important}}
