@@ -141,7 +141,12 @@
   }
   function songCards(list, featured) {
     return list.map(function (s, i) {
-      return card(featured ? "featured" : "recent", s.title, s.artist, s.art, function () { play(list, i); });
+      var item = card(featured ? "featured" : "recent", s.title, s.artist, s.art, function () { play(list, i); });
+      item.addEventListener("contextmenu", function (event) {
+        event.preventDefault();
+        openSongActions(s);
+      });
+      return item;
     });
   }
   function artistCards(list) {
@@ -418,7 +423,8 @@
       wide: !!options.wide,
       fullscreen: !!options.fullscreen,
       profiles: options.profiles || null,
-      cancel: options.cancel
+      cancel: options.cancel,
+      content: options.content
     }, !!options.push);
   }
 
@@ -458,8 +464,9 @@
     ], { push: true });
   }
 
-  function openPlaylistDialog() {
-    showTvMenu("Add to Playlist", current ? current.title : "Choose a playlist for this song.", [
+  function openPlaylistDialog(songOverride) {
+    var selectedSong = songOverride || current;
+    showTvMenu("Add to Playlist", selectedSong ? selectedSong.title : "Choose a playlist for this song.", [
       { label: "New Playlist…", description: "Create a private playlist with this song.", chevron: true, onClick: function () { openNewPlaylistDialog(); } },
       { label: "Liked Music", value: "Playlist", onClick: function () { onTvSongAction("add-to-liked-music"); } },
       { label: "Favorites", value: "Playlist", onClick: function () { onTvSongAction("add-to-favorites-playlist"); } }
@@ -607,16 +614,17 @@
     ], { push: true });
   }
 
-  function openSongActions() {
-    var title = current ? current.title : "No song selected";
-    showTvMenu(title, current ? current.artist : "Track actions", [
-      { label: "Play Next", description: "Add this song after the current track.", chevron: true, onClick: function () { onTvSongAction("play-next"); } },
-      { label: "Play Last", description: "Add this song to the end of the queue.", chevron: true, onClick: function () { onTvSongAction("play-last"); } },
-      { label: "Start Station", chevron: true, onClick: function () { onTvSongAction("start-station"); } },
-      { label: isFav(current) ? "Unlove" : "Love", value: isFav(current) ? "♥" : "♡", onClick: function () { onTvSongAction("toggle-like"); } },
-      { label: "Add to Playlist…", chevron: true, onClick: function () { openPlaylistDialog(); } },
-      { label: "Go to Album", chevron: true, onClick: function () { onTvSongAction("open-album"); } },
-      { label: "Go to Artist", chevron: true, onClick: function () { onTvSongAction("open-artist"); } },
+  function openSongActions(songOverride) {
+    var selectedSong = songOverride || current;
+    var title = selectedSong ? selectedSong.title : "No song selected";
+    showTvMenu(title, selectedSong ? selectedSong.artist : "Track actions", [
+      { label: "Play Next", description: "Add this song after the current track.", chevron: true, onClick: function () { onTvSongAction("play-next", selectedSong); } },
+      { label: "Play Last", description: "Add this song to the end of the queue.", chevron: true, onClick: function () { onTvSongAction("play-last", selectedSong); } },
+      { label: "Start Station", chevron: true, onClick: function () { onTvSongAction("start-station", selectedSong); } },
+      { label: isFav(selectedSong) ? "Unlove" : "Love", value: isFav(selectedSong) ? "♥" : "♡", onClick: function () { onTvSongAction("toggle-like", selectedSong); } },
+      { label: "Add to Playlist…", chevron: true, onClick: function () { openPlaylistDialog(selectedSong); } },
+      { label: "Go to Album", chevron: true, onClick: function () { onTvSongAction("open-album", selectedSong); } },
+      { label: "Go to Artist", chevron: true, onClick: function () { onTvSongAction("open-artist", selectedSong); } },
       { label: "Equalizer", chevron: true, onClick: function () { openEqualizerDialog(); } },
       { label: "Sleep Timer", value: "Off", chevron: true, onClick: function () { openSleepTimerDialog(); } },
       { label: "Stats for Nerds", value: "Off", onClick: function () { onTvSongAction("toggle-stats"); } }
