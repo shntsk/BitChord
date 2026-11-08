@@ -422,3 +422,147 @@ button:focus, button:focus-visible { outline: none; }
 @media(prefers-reduced-motion:reduce){
   .tv-dialog-overlay,.tv-dialog-panel,.tv-profile-switcher,.tv-dialog-row,.tv-profile-card{transition-duration:.01ms!important}
 }
+
+
+/* webOS 6.5 Chromium compatibility and TV-safe dialog layout. */
+.feed,
+.card-row,
+.settings-content,
+.tv-dialog-panel,
+.tv-dialog-list,
+.tv-profile-switcher {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.feed::-webkit-scrollbar,
+.card-row::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar,
+.tv-dialog-panel::-webkit-scrollbar,
+.tv-dialog-list::-webkit-scrollbar,
+.tv-profile-switcher::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Chromium versions before flex-gap support use margins for spacing. */
+.settings-row,
+.tv-dialog-row,
+.tv-dialog-list,
+.tv-dialog-segments,
+.tv-eq-faders,
+.tv-eq-controls,
+.tv-profile-grid,
+.tv-profile-card,
+.tv-profile-actions {
+  gap: 0;
+}
+.settings-row > * + * { margin-left: calc(var(--u)*12); }
+.tv-dialog-row > .tv-dialog-row-copy + * { margin-left: calc(var(--u)*12); }
+.tv-dialog-list > .tv-dialog-row + .tv-dialog-row { margin-top: calc(var(--u)*5); }
+.tv-dialog-segments > * + * { margin-left: calc(var(--u)*7); }
+.tv-eq-fader + .tv-eq-fader { margin-left: calc(var(--u)*8); }
+.tv-eq-controls > * + * { margin-left: calc(var(--u)*3); }
+.tv-profile-grid { margin: 9px -9px 13px; }
+.tv-profile-card { margin: 9px; }
+.tv-profile-card > * + * { margin-top: calc(var(--u)*8); }
+.tv-profile-actions > * + * { margin-left: calc(var(--u)*7); }
+
+/* Disabled information rows stay visible but never steal D-pad focus. */
+.tv-dialog-row:disabled {
+  opacity: .72;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+.tv-dialog-row:disabled:focus,
+.tv-dialog-row:disabled.is-focused {
+  background: rgba(255,255,255,.055);
+  color: rgba(255,255,255,.72) !important;
+}
+
+/* Keep the account chooser compact and remove nested scroll tracks. */
+.tv-dialog-overlay { overflow: hidden; }
+.tv-dialog-panel { overflow-x: hidden; }
+.tv-dialog-panel.is-compact {
+  width: 62vw;
+  max-width: 640px;
+  min-width: 460px;
+  max-height: 72vh;
+  padding: 24px 26px;
+  overflow-y: auto;
+}
+.tv-dialog-panel.is-compact .tv-dialog-list {
+  max-height: none;
+  overflow: visible;
+}
+.tv-dialog-panel.is-compact .tv-dialog-title { font-size: 24px; }
+.tv-dialog-panel.is-compact .tv-dialog-message { margin: 7px auto 15px; }
+.tv-dialog-row.is-focused,
+.tv-dialog-row:focus {
+  background: #f6f6f7;
+  color: #141418 !important;
+}
+.tv-dialog-row.is-focused strong,
+.tv-dialog-row:focus strong { color: #141418 !important; }
+.tv-dialog-row.is-focused small,
+.tv-dialog-row:focus small { color: rgba(20,20,24,.64) !important; }
+.tv-dialog-row.is-focused .tv-dialog-value,
+.tv-dialog-row:focus .tv-dialog-value,
+.tv-dialog-row.is-focused .tv-dialog-chevron,
+.tv-dialog-row:focus .tv-dialog-chevron { color: rgba(20,20,24,.58) !important; }
+
+/* Profile cards wrap inside the screen safe area instead of overflowing. */
+.tv-profile-switcher {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: center;
+  padding: 28px 42px;
+}
+.tv-profile-grid {
+  display: flex;
+  width: 100%;
+  max-width: 920px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+}
+.tv-profile-card {
+  flex: 0 1 142px;
+  width: 142px;
+  min-width: 142px;
+  min-height: 142px;
+}
+.tv-profile-avatar { width: 64px; height: 64px; font-size: 28px; }
+.tv-profile-actions {
+  max-width: 500px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0 auto;
+}
+.tv-profile-actions .tv-dialog-row { min-width: 190px; }
+@media (max-width: 1000px) {
+  .tv-dialog-panel,
+  .tv-dialog-panel.is-wide { width: 88vw; min-width: 0; max-width: 88vw; }
+  .tv-dialog-panel.is-compact { width: 84vw; min-width: 0; max-width: 84vw; }
+  .tv-profile-switcher { padding: 20px; }
+  .tv-profile-card { flex-basis: 118px; width: 118px; min-width: 118px; }
+}
+@media (max-height: 760px) {
+  .tv-profile-switcher { justify-content: flex-start; padding-top: 18px; padding-bottom: 18px; }
+  .tv-profile-mark { width: 48px; height: 48px; margin-bottom: 10px; }
+  .tv-profile-switcher h1 { font-size: calc(var(--u)*25); }
+  .tv-profile-switcher .tv-dialog-message { margin-bottom: 12px; }
+  .tv-profile-grid { margin-top: 8px; margin-bottom: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-dialog-overlay,
+  .tv-dialog-panel,
+  .tv-profile-switcher,
+  .tv-dialog-row,
+  .tv-profile-card,
+  .settings-row { transition-duration: .01ms !important; }
+}
