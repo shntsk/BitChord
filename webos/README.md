@@ -44,3 +44,22 @@ The official CLI writes an .ipk package into the current directory.
 The existing platform workflow includes a webOS TV IPK job. It validates the manifest and JavaScript, packages webos/app, and uploads the BitChord-webOS-IPK artifact.
 
 A successful CI package is not a substitute for installing and testing the IPK on a physical LG TV or webOS simulator.
+
+
+## Android TV menu parity (webOS UI branch)
+
+The webOS interface now includes the Android TV menu structure and presentation:
+
+- Settings groups: Account, Playback, Sound, Now Playing, Display, Connections and General.
+- Account/profile switcher, account settings and PIN keypad surfaces.
+- Track action sheet, playlist picker/new-playlist sheet and sleep timer.
+- Equalizer bands/presets, lyrics provider list, appearance and refresh-rate pickers.
+- Scrobbling, Discord, software-update and About dialogs.
+
+Dialogs animate in with a fade and scale transition; menu rows, settings rows, profile cards and equalizer controls have animated D-pad focus states. Back closes a dialog or returns to its previous sheet. Track cards also expose their action menu through the context-menu event and the remote Menu key.
+
+### Implementation boundary
+
+This branch is deliberately UI-first. The new menu actions call empty `onTv*Action` functions in `webos/app/js/app.js`; they do not implement sign-in, profile switching, queue edits, settings persistence, lyrics providers, equalizer DSP, Discord/scrobbling, update installation or PIN security. The next implementation pass should connect those callbacks to the real webOS-compatible services and data while preserving the existing markup, focus states and transitions.
+
+Keep the JavaScript compatible with the TV's older Chromium runtime: avoid optional chaining and nullish coalescing, and retain the current ES5-style patterns in this app.

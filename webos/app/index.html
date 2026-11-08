@@ -56,30 +56,85 @@
             <button type="button" class="round-btn round-big" id="np-play" data-focus aria-label="Play or pause">&#9654;</button>
             <button type="button" class="round-btn" id="np-next" data-focus aria-label="Next">&#9197;</button>
             <button type="button" class="round-btn" id="np-fav" data-focus aria-label="Favorite">&#9825;</button>
+            <button type="button" class="round-btn" id="np-more" data-focus aria-label="More options">&#8942;</button>
           </div>
         </div>
       </div>
     </section>
 
     <section id="screen-settings" class="screen" data-screen="settings" aria-label="Settings" hidden>
-      <div class="feed">
-        <div class="panel">
-          <h2>Music server</h2>
-          <p>Leave empty to use the built-in list of public Piped servers (tried in order).</p>
-          <input id="set-instance" type="text" data-focus data-lead placeholder="https://pipedapi.example.com" autocomplete="off">
-          <h2>Region</h2>
-          <p>Two-letter country code used for Trending, e.g. US, BR, GB.</p>
-          <input id="set-region" type="text" data-focus maxlength="2" placeholder="US" autocomplete="off">
-          <div class="panel-actions">
-            <button type="button" class="pill-btn" id="set-test" data-focus>Save &amp; test connection</button>
-            <button type="button" class="pill-btn" id="set-clear" data-focus>Clear history</button>
-          </div>
-          <p id="set-status" class="panel-status"></p>
+      <div class="settings-shell">
+        <aside class="settings-summary">
+          <img class="settings-mark" src="brand-mark.svg" alt="BitChord">
+          <h1 id="settings-summary-title">Settings</h1>
+          <p id="settings-description">Playback, sound and display preferences for BitChord on this TV.</p>
+          
+        </aside>
+        <div class="settings-content" id="settings-list">
+          <section class="settings-group">
+            <h2>Account</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="account" data-description="Your library, playlists and recommendations come from this account."><span class="settings-row-copy"><strong>YouTube Music</strong></span><span class="settings-value">Sign In</span><span class="settings-chevron">›</span></button>
+          </section>
+          <section class="settings-group">
+            <h2>Playback</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="automix" data-description="Blends one song into the next, matched to their tempo."><span class="settings-row-copy"><strong>Automix</strong></span><span class="settings-value">Off</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="crossfade" data-description="Fades each song out as the next one fades in. Select to change the length."><span class="settings-row-copy"><strong>Crossfade</strong></span><span class="settings-value">Off</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="autoplay" data-description="When the queue ends, keeps playing music similar to what you were listening to."><span class="settings-row-copy"><strong>Autoplay</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="skip-silence" data-description="Skips over silent stretches at the start and end of songs."><span class="settings-row-copy"><strong>Skip Silence</strong></span><span class="settings-value">Off</span></button>
+          </section>
+          <section class="settings-group">
+            <h2>Sound</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="equalizer" data-description="Shape the sound with presets or seven bands of your own."><span class="settings-row-copy"><strong>Equalizer</strong></span><span class="settings-value">Off</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="spatial-audio" data-description="Widens stereo music using the TV's audio virtualizer, where it has one."><span class="settings-row-copy"><strong>Spatial Audio</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="sound-check" data-description="Plays every song at the same perceived loudness."><span class="settings-row-copy"><strong>Sound Check</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="usb-dac" data-description="Sends audio straight to a connected USB DAC, unchanged, when one is attached."><span class="settings-row-copy"><strong>USB DAC</strong></span><span class="settings-value">Off</span></button>
+          </section>
+          <section class="settings-group">
+            <h2>Now Playing</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="synced-lyrics" data-description="Lyrics that follow along with the song, line by line."><span class="settings-row-copy"><strong>Synced Lyrics</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="lyrics-sources" data-description="Choose which lyric databases to ask, and in what order."><span class="settings-row-copy"><strong>Lyrics Sources</strong></span><span class="settings-value">15 On</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="motion-artwork" data-description="Plays a song's looping video artwork behind the player, when it has one."><span class="settings-row-copy"><strong>Motion Artwork</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="motion-artwork-lyrics" data-description="Keeps the video artwork playing behind full-screen lyrics."><span class="settings-row-copy"><strong>Motion Artwork in Lyrics</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="stats" data-description="Shows the codec, bitrate and sample rate of what's playing."><span class="settings-row-copy"><strong>Stats for Nerds</strong></span><span class="settings-value">Off</span></button>
+          </section>
+          <section class="settings-group">
+            <h2>Display</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="appearance" data-description="The background behind BitChord's pages."><span class="settings-row-copy"><strong>Appearance</strong></span><span class="settings-value">Dark</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="player-background" data-description="What Now Playing shows behind the song: artwork colours or AMOLED's pure black."><span class="settings-row-copy"><strong>Player Background</strong></span><span class="settings-value">Artwork</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="interface-size" data-description="Makes everything larger or smaller. Select to step through sizes."><span class="settings-row-copy"><strong>Interface Size</strong></span><span class="settings-value">100%</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="refresh-rate" data-description="How often the screen redraws while you browse."><span class="settings-row-copy"><strong>Refresh Rate</strong></span><span class="settings-value">System Default</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="reduce-motion" data-description="Calms the moving background and other decorative animation."><span class="settings-row-copy"><strong>Reduce Motion</strong></span><span class="settings-value">Off</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="reduce-transparency" data-description="Replaces blurred backgrounds with solid ones. Helps on slower TVs."><span class="settings-row-copy"><strong>Reduce Transparency</strong></span><span class="settings-value">Off</span></button>
+          </section>
+          <section class="settings-group">
+            <h2>Connections</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="scrobbling" data-description="Last.fm and ListenBrainz."><span class="settings-row-copy"><strong>Scrobbling</strong></span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="discord" data-description="Show what you're listening to in your Discord status."><span class="settings-row-copy"><strong>Discord</strong></span><span class="settings-chevron">›</span></button>
+          </section>
+          <section class="settings-group">
+            <h2>General</h2>
+            <button class="settings-row" type="button" data-focus data-ui-action="software-update" data-description="Download and install the latest version of BitChord for TV."><span class="settings-row-copy"><strong>Software Update</strong></span><span class="settings-value">Check</span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="set-up-again" data-description="Go through the first-time setup again."><span class="settings-row-copy"><strong>Set Up Again</strong></span><span class="settings-chevron">›</span></button>
+            <button class="settings-row" type="button" data-focus data-ui-action="about" data-description="BitChord version and open-source credits."><span class="settings-row-copy"><strong>About</strong></span><span class="settings-value">WebOS</span><span class="settings-chevron">›</span></button>
+          </section>
+          <section class="settings-group settings-technical">
+            <h2>Music server</h2>
+            <p>Leave empty to use the built-in list of public Piped servers (tried in order).</p>
+            <input id="set-instance" type="text" data-focus placeholder="https://pipedapi.example.com" autocomplete="off">
+            <h2>Region</h2>
+            <p>Two-letter country code used for Trending, e.g. US, BR, GB.</p>
+            <input id="set-region" type="text" data-focus maxlength="2" placeholder="US" autocomplete="off">
+            <div class="panel-actions">
+              <button type="button" class="pill-btn" id="set-test" data-focus>Save &amp; test connection</button>
+              <button type="button" class="pill-btn" id="set-clear" data-focus>Clear history</button>
+            </div>
+            <p id="set-status" class="panel-status"></p>
+          </section>
         </div>
       </div>
     </section>
-
-    <audio id="audio" preload="auto"></audio>
+<audio id="audio" preload="auto"></audio>
+    <div id="dialog-root"></div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </main>
   <script src="js/app.js"></script>
